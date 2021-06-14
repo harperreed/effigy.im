@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/a/**",
+        "function": "avatar"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
