@@ -25,6 +25,13 @@ That will render SVG:\
 
 * * * * *
 
+Inspired and influenced by:
+
+- [MyCryptoHQ/ethereum-blockies-base64](https://github.com/MyCryptoHQ/ethereum-blockies-base64)
+- [download13/blockies](https://github.com/download13/blockies)
+- [htPR by @qwtel](https://github.com/download13/blockies/pull/12)
+
+
 Feel free to help make this better by submitting a pull request or sending me a note.
 
 -   [effigy.im on github](https://github.com/harperreed/effigy.im)
