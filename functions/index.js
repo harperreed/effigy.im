@@ -156,7 +156,7 @@ function renderSVG(opts) {
 
   const size = opts.size * opts.scale;
 
-  let svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '">';
+  let svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '" style="shape-rendering: crispEdges">';
   svg += '<rect x="0" y="0" width="' + size + '" height="' + size + '" fill="' + opts.bgcolor + '"/>';
 
   for (let i = 0; i < imageData.length; i++) {
