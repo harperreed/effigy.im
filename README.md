@@ -2,26 +2,11 @@
 
 This is a simple service that will return a **identicon** of an ethereum address. You can use this to power avatars or whatever in your webapp
 
-Use
----
+## Usage
 
 To use the service you just need to use the url in an image like so:
 
-    <img src="https://effigy.im/a/{ethereumAddress}.[png|svg]">
-
-### Example
-
-    <img src="https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png">
-
-That will render PNG:\
-![](https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png)
-
-or
-
-    <img src="https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg">
-
-That will render SVG:\
-![](https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg)
+    <img src="https://effigy.im/a/[ethereumAddress|ensName].[png|svg]">
 
 * * * * *
 
