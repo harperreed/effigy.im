@@ -110,7 +110,7 @@ exports.avatar = functions.https.onRequest(async (request, response) => {
     console.error(error);
     return throwErrorResponse(response, 500, "Invalid ethereum address");
   }
-  
+
   const ensAvatar = await getENSAvatar(ethereumAddress);
 
   if (ensAvatar){
@@ -138,6 +138,7 @@ exports.avatar = functions.https.onRequest(async (request, response) => {
         contentType = 'image/png'
         break;
       case 'ens':
+          response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
           response.redirect(ensAvatar);
           return
       default:
