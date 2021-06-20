@@ -1,0 +1,14 @@
+{{ $apiPrefix := "https://api.airtable.com/v0/"}}
+{{ $key := getenv "AIRTABLE_KEY" }}
+
+{{ $results := getJSON $apiPrefix $.Site.Params.base "/" "Sources" "?api_key=" $key  "&sort%5B0%5D%5Bfield%5D=" "Count"  "&sort%5B0%5D%5Bdirection%5D=" "desc"}}
+<hr>
+<h3>Sources</h3>
+<ul>
+{{ range $results.records }}
+<li>
+  <a href="{{  .fields.Link }}">{{.fields.Title}}</a>
+</li>
+{{end}}
+</ul>
+
