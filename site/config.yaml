@@ -1,0 +1,24 @@
+baseURL: /
+
+publishDir: "public"
+languageCode: en-us
+title: "effigy.im"
+description: "easy ethereum avatars"
+
+canonifyURLs: true
+enableRobotsTXT: true
+
+params:
+  description: "easy ethereum avatars"
+  keywords: "ethereum avatars ens name picture blockies identicons"
+
+
+disableKinds:
+  - section
+  - section
+  - taxonomy
+  - taxonomyTerm
+  - rss
+  - section
+  - page
+
