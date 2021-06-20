@@ -12,18 +12,18 @@ function parseURL(url) {
   const urlParts = url.replace("/a/", "").split(".");
 
   // Handle ENS domains
-  if (urlParts[1] === "eth"){
+  if (urlParts[1] === "eth") {
     addressFromUrl = `${urlParts[0]}.${urlParts[1]}`
     if (urlParts[2]) {
       type = urlParts[2];
     }
-  }else{
+  } else {
     addressFromUrl = urlParts[0];
     if (urlParts[1]) {
       type = urlParts[1];
     }
   }
-  
+
   return {
     addressFromUrl,
     type
@@ -40,41 +40,57 @@ function throwErrorResponse(response, error, message) {
   return
 }
 
-function getProvider(){
+function getProvider() {
   const network = functions.config().ethereum.network
 
   const options = {
-    infura: functions.config().infura.projectid, 
+    infura: functions.config().infura.projectid,
     alchemy: functions.config().alchemy.key,
     pocket: functions.config().pocket.key,
   }
 
   const provider = ethers.getDefaultProvider(network, options);
 
-  if (provider){
+  if (provider) {
     return provider;
-  }else{
+  } else {
     return undefined;
   }
 
 }
 
-async function getEthereumAddress(addressString){
+async function getEthereumAddress(addressString) {
 
-  if (addressString.includes(".eth")){
+  if (addressString.includes(".eth")) {
     const provider = getProvider();
     address = await provider.resolveName(addressString)
-  } else{
+  } else {
     address = addressString
   }
-  
+
   ethereumAddress = ethers.utils.getAddress(address);
-  
+
   return ethereumAddress;
 
 }
 
-exports.avatar = functions.https.onRequest(async(request, response) => {
+async function getENSAvatar(addressString) {
+  try {
+    const provider = getProvider();
+    const ensName = await provider.lookupAddress(addressString);
+    const resolver = await provider.getResolver(ensName);
+    const avatarUrl = await resolver.getText('avatar')
+    return avatarUrl
+  } catch (error) {
+    console.warn(error)
+    return undefined
+  }
+
+
+}
+
+
+exports.avatar = functions.https.onRequest(async (request, response) => {
 
   let urlParams, ethereumAddress;
   try {
@@ -84,15 +100,21 @@ exports.avatar = functions.https.onRequest(async(request, response) => {
     return throwErrorResponse(response, 404, "Invalid url format");
   }
 
-  const type = urlParams.type;
+  let type = urlParams.type;
   const addressFromUrl = urlParams.addressFromUrl;
-  
+
 
   try {
     ethereumAddress = await getEthereumAddress(addressFromUrl)
   } catch (error) {
     console.error(error);
     return throwErrorResponse(response, 500, "Invalid ethereum address");
+  }
+  
+  const ensAvatar = await getENSAvatar(ethereumAddress);
+
+  if (ensAvatar){
+    type = "ens";
   }
 
   const addressSeed = ethereumAddress.toLowerCase();
@@ -115,6 +137,9 @@ exports.avatar = functions.https.onRequest(async(request, response) => {
         filename = `${ethereumAddress}.png`
         contentType = 'image/png'
         break;
+      case 'ens':
+          response.redirect(ensAvatar);
+          return
       default:
         console.error(`invalid type: ${type}`);
         return throwErrorResponse(response, 500, `invalid type: ${type}`)
