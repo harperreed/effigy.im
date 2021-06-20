@@ -16,16 +16,16 @@ To use the service you just need to use the url in an image like so:
 
 #### Using ethereum addresses
 
-| URL | Image |
-:-------------------------:|:-------------------------:
+| Avatar URL | Image |
+-------------------------|:-------------------------:
 | `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png`     | ![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png)   |
 | `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg`     | ![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg)   |
 
 
 #### You can also use ENS names:
 
-| Markup | Image |
-:-------------------------:|:-------------------------:
+| Avatar URL | Image |
+-------------------------|:-------------------------:
 | `https://effigy.im/a/vitalik.eth.png`     | ![](/a/vitalik.eth.png)   |
 | `https://effigy.im/a/vitalik.eth.svg`     | ![](/a/vitalik.eth.svg)   |
 
