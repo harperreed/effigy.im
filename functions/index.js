@@ -4,16 +4,26 @@ const ethers = require('ethers')
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
 
-
 function parseURL(url) {
 
-  const urlParts = url.replace("/a/", "").split(".");
-  const addressFromUrl = urlParts[0];
+  let addressFromUrl;
   let type = "svg"
-  if (urlParts[1]) {
-    type = urlParts[1];
-  }
 
+  const urlParts = url.replace("/a/", "").split(".");
+
+  // Handle ENS domains
+  if (urlParts[1] === "eth"){
+    addressFromUrl = `${urlParts[0]}.${urlParts[1]}`
+    if (urlParts[2]) {
+      type = urlParts[2];
+    }
+  }else{
+    addressFromUrl = urlParts[0];
+    if (urlParts[1]) {
+      type = urlParts[1];
+    }
+  }
+  
   return {
     addressFromUrl,
     type
@@ -30,31 +40,64 @@ function throwErrorResponse(response, error, message) {
   return
 }
 
-exports.avatar = functions.https.onRequest((request, response) => {
+function getProvider(){
+  const network = functions.config().ethereum.network
 
-  let errorState = false;
-  let params, address;
-  try {
-    params = parseURL(request.url);
-  } catch (error) {
-    console.error(error);
-    return throwErrorResponse(response, 404, "Invalid url");
+  const options = {
+    infura: functions.config().infura.projectid, 
+    alchemy: functions.config().alchemy.key,
+    pocket: functions.config().pocket.key,
   }
 
-  const type = params.type;
-  const addressFromUrl = params.addressFromUrl;
+  const provider = ethers.getDefaultProvider(network, options);
+
+  if (provider){
+    return provider;
+  }else{
+    return undefined;
+  }
+
+}
+
+async function getEthereumAddress(addressString){
+
+  if (addressString.includes(".eth")){
+    const provider = getProvider();
+    address = await provider.resolveName(addressString)
+  } else{
+    address = addressString
+  }
+  
+  ethereumAddress = ethers.utils.getAddress(address);
+  
+  return ethereumAddress;
+
+}
+
+exports.avatar = functions.https.onRequest(async(request, response) => {
+
+  let urlParams, ethereumAddress;
+  try {
+    urlParams = parseURL(request.url);
+  } catch (error) {
+    console.error(error);
+    return throwErrorResponse(response, 404, "Invalid url format");
+  }
+
+  const type = urlParams.type;
+  const addressFromUrl = urlParams.addressFromUrl;
+  
 
   try {
-    address = ethers.utils.getAddress(addressFromUrl);
+    ethereumAddress = await getEthereumAddress(addressFromUrl)
   } catch (error) {
     console.error(error);
     return throwErrorResponse(response, 500, "Invalid ethereum address");
   }
 
-  const addressSeed = address.toLowerCase();
+  const addressSeed = ethereumAddress.toLowerCase();
 
   let filename, contentType;
-
 
   try {
     switch (type) {
@@ -62,17 +105,19 @@ exports.avatar = functions.https.onRequest((request, response) => {
         var iconBody = renderSVG({ // All options are optional
           seed: addressSeed, // seed used to generate icon data, default: random
         })
-        filename = `${address}.svg`
+        filename = `${ethereumAddress}.svg`
         contentType = 'image/svg+xml'
         break;
       case 'png':
         var iconBody = renderPNG({ // All options are optional
           seed: addressSeed, // seed used to generate icon data, default: random
         })
-        filename = `${address}.png`
+        filename = `${ethereumAddress}.png`
         contentType = 'image/png'
         break;
       default:
+        console.error(`invalid type: ${type}`);
+        return throwErrorResponse(response, 500, `invalid type: ${type}`)
     }
 
     response.setHeader('Content-Type', contentType);
@@ -82,7 +127,7 @@ exports.avatar = functions.https.onRequest((request, response) => {
     return;
   } catch (error) {
     console.error(error);
-    return throwErrorResponse(response, "Error rendering")
+    return throwErrorResponse(response, 500, "Error rendering")
 
   }
 

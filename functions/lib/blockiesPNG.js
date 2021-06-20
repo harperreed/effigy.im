@@ -56,7 +56,6 @@ function buildOptions(opts) {
     throw new Error('No seed provided');
   }
 
-  console.log(blockiesCommon.randomizeSeed(opts.seed))
 
   blockiesCommon.randomizeSeed(opts.seed);
 
