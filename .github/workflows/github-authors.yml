@@ -2,7 +2,7 @@ name: 'Github: Update AUTHORS'
 on:
   push:
     branches:
-      - development
+      - main
 jobs:
   updateAuthors:
     runs-on: ubuntu-latest
