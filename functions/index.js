@@ -77,7 +77,7 @@ exports.avatar = functions.https.onRequest((request, response) => {
 
     response.setHeader('Content-Type', contentType);
     response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
-    response.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+    response.setHeader("Content-Disposition", `inline; filename=${filename}`);
     response.send(iconBody);
     return;
   } catch (error) {
