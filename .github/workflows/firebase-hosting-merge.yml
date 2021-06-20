@@ -18,6 +18,7 @@ jobs:
           extended: true
       - name: Build Hugo
         run: hugo --minify
+        working-directory: site
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
