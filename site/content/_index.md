@@ -16,25 +16,18 @@ To use the service you just need to use the url in an image like so:
 
 #### Using ethereum addresses
 
-    <img src="https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png">
+| Avatar URL | Image |
+-------------------------|:-------------------------:
+| `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png`     | ![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png)   |
+| `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg`     | ![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg)   |
 
-That will render PNG:\
-![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png)
-
-or
-
-    <img src="https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg">
-
-That will render SVG:\
-![](/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg)
 
 #### You can also use ENS names:
 
-
-    <img src="https://effigy.im/a/vitalik.eth.svg">
-
-That will render the ens name identicon as SVG:\
-![](/a/vitalik.eth.svg)
+| Avatar URL | Image |
+-------------------------|:-------------------------:
+| `https://effigy.im/a/vitalik.eth.png`     | ![](/a/vitalik.eth.png)   |
+| `https://effigy.im/a/vitalik.eth.svg`     | ![](/a/vitalik.eth.svg)   |
 
 
 * * * * *
