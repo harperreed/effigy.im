@@ -44,6 +44,7 @@ The only caveat is that it will return the same filetype as the ENS stored avata
 Inspired and influenced by:
 
 - [MyCryptoHQ/ethereum-blockies-base64](https://github.com/MyCryptoHQ/ethereum-blockies-base64)
+- [@davatar/react](https://www.npmjs.com/package/@davatar/react)
 - [download13/blockies](https://github.com/download13/blockies)
 - [PR by @qwtel](https://github.com/download13/blockies/pull/12)
 
@@ -51,5 +52,6 @@ Inspired and influenced by:
 Feel free to help make this better by submitting a pull request or sending me a note.
 
 -   [effigy.im on github](https://github.com/harperreed/effigy.im)
+-   [HMU on twitter: @harper](https://twitter.com/harper)
 -   [Send me a note: harper@modest.com](mailto:harper@modest.com)
 

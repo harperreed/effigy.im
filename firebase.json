@@ -12,6 +12,10 @@
         "function": "avatar"
       },
       {
+        "source": "/token/**",
+        "function": "displayToken"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
