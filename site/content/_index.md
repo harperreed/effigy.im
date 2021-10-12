@@ -29,19 +29,22 @@ To use the service you just need to use the url in an image like so:
 
 #### If there is an avatar url in the ENS data, effigy will use that instead:
 
-The only caveat is that it will return the same filetype as the ENS stored avatar - even if you specify `png` as the type. This will redirect the request to the avatar URL specified in the ENS avatar record.
+The only caveat is that it will return the same filetype as the ENS stored avatar - even if you specify `png` as the type. This will redirect the request to the avatar URL specified in the ENS avatar record. This supports pulling verified NFTs from the ENS avatar ([more info here](https://medium.com/the-ethereum-name-service/step-by-step-guide-to-setting-an-nft-as-your-ens-profile-avatar-3562d39567fc)).
 
 | Avatar URL | Image |
 -------------------------|:-------------------------:
+| `https://effigy.im/a/brantly.eth.png`     | ![](/a/brantly.eth.png)   |
 | `https://effigy.im/a/huh.eth.png`     | ![](/a/huh.eth.png)   |
 | `https://effigy.im/a/galligan.eth.png`     | ![](/a/galligan.eth.png)   |
 | `https://effigy.im/a/harper.eth.png`     | ![](/a/harper.eth.png)   |
+
 
 * * * * *
 
 Inspired and influenced by:
 
 - [MyCryptoHQ/ethereum-blockies-base64](https://github.com/MyCryptoHQ/ethereum-blockies-base64)
+- [@davatar/react](https://www.npmjs.com/package/@davatar/react)
 - [download13/blockies](https://github.com/download13/blockies)
 - [PR by @qwtel](https://github.com/download13/blockies/pull/12)
 
@@ -49,5 +52,6 @@ Inspired and influenced by:
 Feel free to help make this better by submitting a pull request or sending me a note.
 
 -   [effigy.im on github](https://github.com/harperreed/effigy.im)
+-   [HMU on twitter: @harper](https://twitter.com/harper)
 -   [Send me a note: harper@modest.com](mailto:harper@modest.com)
 

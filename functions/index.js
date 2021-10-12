@@ -1,8 +1,23 @@
 const functions = require('firebase-functions');
 const ethers = require('ethers')
+const { AssetId } = require("caip");
+const axios = require('axios').default;
 
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
+
+
+/* Davatars is great */
+const erc721Abi = [
+  'function ownerOf(uint256 tokenId) view returns (address)',
+  'function tokenURI(uint256 _tokenId) external view returns (string)',
+];
+
+const erc1155Abi = [
+  'function balanceOf(address _owner, uint256 _id) view returns (uint256)',
+  'function uri(uint256 _id) view returns (string)',
+];
+
 
 function parseURL(url) {
 
@@ -43,13 +58,15 @@ function throwErrorResponse(response, error, message) {
 function getProvider() {
   const network = functions.config().ethereum.network
 
-  const options = {
-    infura: functions.config().infura.projectid,
-    alchemy: functions.config().alchemy.key,
-    pocket: functions.config().pocket.key,
-  }
+  // const options = {
+  //   infura: functions.config().infura.projectid,
+  //   alchemy: functions.config().alchemy.key,
+  //   pocket: functions.config().pocket.key,
+  // }
 
-  const provider = ethers.getDefaultProvider(network, options);
+
+  // const provider = ethers.getDefaultProvider(network, options);
+  const provider = new ethers.providers.InfuraProvider(null, functions.config().infura.projectid);
 
   if (provider) {
     return provider;
@@ -74,19 +91,109 @@ async function getEthereumAddress(addressString) {
 
 }
 
+async function crawlTokenUri(tokenUri) {
+  const res = await axios(tokenUri);
+  const tokenObj = await res.data;
+  return tokenObj;
+}
+
+
+async function grabImageUriContract(type, address, tokenId, ownerAddress) {
+  const provider = getProvider();
+
+  let abi;
+
+  if (type === "erc721") {
+    abi = erc721Abi;
+  } else if (type === "erc1155") {
+    abi = erc1155Abi
+  }
+
+  const contract = new ethers.Contract(address, abi, provider);
+
+  /* Verify token Ownership */
+  if (type === "erc721") {
+    const owner = await contract.ownerOf(tokenId);
+    if (owner !== ownerAddress) {
+      throw ("Token not owned by this address")
+    }
+  }else if (type === "erc1155") {
+    const balance = await contract.balanceOf(ownerAddress, tokenId);
+    if (balance === 0) {
+      throw ("Token not owned by this address")
+    }
+  }
+
+  const tokenUri = await contract.tokenURI(tokenId);
+
+  /* get Images */
+  
+  if (type === "erc721") {
+    const tokenUri = await contract.tokenURI(tokenId);
+  } else if (type === "erc1155") {
+    const tokenUri = await contract.uri(tokenId);
+  }
+
+  const token = await crawlTokenUri(tokenUri)
+
+  if ('image' in token) {
+    return token.image
+  } else {
+    return undefined
+  }
+}
+
 async function getENSAvatar(addressString) {
   try {
     const provider = getProvider();
     const ensName = await provider.lookupAddress(addressString);
     const resolver = await provider.getResolver(ensName);
-    const avatarUrl = await resolver.getText('avatar')
+    const avatarText = await resolver.getText('avatar')
+
+    let avatarUrl;
+
+    let ensAvatarUrl;
+
+    if (avatarText.includes("eip155:")) {
+      /* Let's grab the tokenId from the avatar url */
+      const assetId = new AssetId(avatarText);
+
+      const tokenImageUri = await grabImageUriContract(assetId.assetName.namespace, assetId.assetName.reference, assetId.tokenId, addressString)
+      if (tokenImageUri) {
+        ensAvatarUrl = tokenImageUri;
+      }
+    } else {
+      ensAvatarUrl = avatarText;
+    }
+
+    if (!ensAvatarUrl) {
+      throw ("No avatar found")
+
+    }
+
+
+    if (ensAvatarUrl.includes("https://") || ensAvatarUrl.includes("http://")) {
+      avatarUrl = ensAvatarUrl;
+    } else if (ensAvatarUrl.includes("ipfs://")) {
+      const CID = ensAvatarUrl.replace("ipfs://", "");
+      const ipfsUrl = `https://ipfs.infura.io/ipfs/${CID}`
+      avatarUrl = ipfsUrl;
+
+    } else if (ensAvatarUrl.includes("ipns://")) {
+      const ipnsUrl = ensAvatarUrl.replace("ipns://", "https://ipfs.infura.io/ipns/");
+      avatarUrl = ipnsUrl;
+
+    } else {
+      avatarUrl = ensAvatarUrl;
+    }
+
+
+    console.log("resolved ens avatar: ", avatarUrl)
     return avatarUrl
   } catch (error) {
     console.warn(error)
     return undefined
   }
-
-
 }
 
 
@@ -113,7 +220,7 @@ exports.avatar = functions.https.onRequest(async (request, response) => {
 
   const ensAvatar = await getENSAvatar(ethereumAddress);
 
-  if (ensAvatar){
+  if (ensAvatar) {
     type = "ens";
   }
 
@@ -138,14 +245,15 @@ exports.avatar = functions.https.onRequest(async (request, response) => {
         contentType = 'image/png'
         break;
       case 'ens':
-          response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
-          response.redirect(ensAvatar);
-          return
+        response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
+        response.redirect(ensAvatar);
+        return
       default:
         console.error(`invalid type: ${type}`);
         return throwErrorResponse(response, 500, `invalid type: ${type}`)
     }
 
+    console.log(`${ethereumAddress} ${type}`);
     response.setHeader('Content-Type', contentType);
     response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
     response.setHeader("Content-Disposition", `inline; filename=${filename}`);
