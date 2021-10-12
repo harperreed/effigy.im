@@ -4,8 +4,9 @@ date: 2021-06-20T05:31:18Z
 draft: false
 ---
 
-
 This is a simple service that will return an **identicon** of an ethereum address. You can use this to power avatars in your webapp/dapp/web3 experience. If the address has set an ENS text record for an avater, effigy.im will redirect and use that. 
+
+Think of *effigy* as a simple [gravatar](https://en.gravatar.com/) for ethereum.
 
 ## Usage
 
@@ -33,11 +34,17 @@ The only caveat is that it will return the same filetype as the ENS stored avata
 
 | Avatar URL | Image |
 -------------------------|:-------------------------:
-| `https://effigy.im/a/brantly.eth.png`     | ![](/a/brantly.eth.png)   |
+| `https://effigy.im/a/brantly.eth.svg`     | ![](/a/brantly.eth.svg)   |
 | `https://effigy.im/a/huh.eth.png`     | ![](/a/huh.eth.png)   |
 | `https://effigy.im/a/galligan.eth.png`     | ![](/a/galligan.eth.png)   |
 | `https://effigy.im/a/harper.eth.png`     | ![](/a/harper.eth.png)   |
 
+* * * * *
+
+**TODO:**
+
+- [ ] Better caching
+- [ ] Add support for other ens domain names
 
 * * * * *
 
@@ -47,11 +54,13 @@ Inspired and influenced by:
 - [@davatar/react](https://www.npmjs.com/package/@davatar/react)
 - [download13/blockies](https://github.com/download13/blockies)
 - [PR by @qwtel](https://github.com/download13/blockies/pull/12)
+- [gravatar](https://en.gravatar.com/)
 
 
 Feel free to help make this better by submitting a pull request or sending me a note.
 
--   [effigy.im on github](https://github.com/harperreed/effigy.im)
+-   [Submit an issue to make effigy.im better](https://github.com/harperreed/effigy.im/issues)
+-   [Check out effigy.im on github](https://github.com/harperreed/effigy.im)
 -   [HMU on twitter: @harper](https://twitter.com/harper)
 -   [Send me a note: harper@modest.com](mailto:harper@modest.com)
 
