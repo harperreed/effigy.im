@@ -56,11 +56,9 @@ Inspired and influenced by:
 - [PR by @qwtel](https://github.com/download13/blockies/pull/12)
 - [gravatar](https://en.gravatar.com/)
 
-
 Feel free to help make this better by submitting a pull request or sending me a note.
 
 -   [Submit an issue to make effigy.im better](https://github.com/harperreed/effigy.im/issues)
 -   [Check out effigy.im on github](https://github.com/harperreed/effigy.im)
 -   [HMU on twitter: @harper](https://twitter.com/harper)
 -   [Send me a note: harper@modest.com](mailto:harper@modest.com)
-
