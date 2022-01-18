@@ -66,7 +66,8 @@ function getProvider() {
 
 
   // const provider = ethers.getDefaultProvider(network, options);
-  const provider = new ethers.providers.InfuraProvider(null, functions.config().infura.projectid);
+  // const provider = new ethers.providers.InfuraProvider(null, functions.config().infura.projectid);
+  const provider = new ethers.providers.AlchemyProvider(null, functions.config().alchemy.key);
 
   if (provider) {
     return provider;
