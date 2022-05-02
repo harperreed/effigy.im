@@ -118,7 +118,7 @@ async function grabImageUriContract(type, address, tokenId, ownerAddress) {
     if (owner !== ownerAddress) {
       throw ("Token not owned by this address")
     }
-  }else if (type === "erc1155") {
+  } else if (type === "erc1155") {
     const balance = await contract.balanceOf(ownerAddress, tokenId);
     if (balance === 0) {
       throw ("Token not owned by this address")
@@ -128,7 +128,7 @@ async function grabImageUriContract(type, address, tokenId, ownerAddress) {
   const tokenUri = await contract.tokenURI(tokenId);
 
   /* get Images */
-  
+
   if (type === "erc721") {
     const tokenUri = await contract.tokenURI(tokenId);
   } else if (type === "erc1155") {
@@ -184,11 +184,11 @@ async function getENSAvatar(addressString) {
       const ipnsUrl = ensAvatarUrl.replace("ipns://", "https://ipfs.infura.io/ipns/");
       avatarUrl = ipnsUrl;
 
-   } else if (ensAvatarUrl.includes("ar://")) {
+    } else if (ensAvatarUrl.includes("ar://")) {
       const arUrl = ensAvatarUrl.replace("ar://", "https://arweave.net/");
       avatarUrl = arUrl;
 
-    }else {
+    } else {
       avatarUrl = ensAvatarUrl;
     }
 
