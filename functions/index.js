@@ -184,7 +184,11 @@ async function getENSAvatar(addressString) {
       const ipnsUrl = ensAvatarUrl.replace("ipns://", "https://ipfs.infura.io/ipns/");
       avatarUrl = ipnsUrl;
 
-    } else {
+   } else if (ensAvatarUrl.includes("ar://")) {
+      const arUrl = ensAvatarUrl.replace("ar://", "https://arweave.net/");
+      avatarUrl = arUrl;
+
+    }else {
       avatarUrl = ensAvatarUrl;
     }
 
