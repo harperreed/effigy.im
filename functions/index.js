@@ -25,13 +25,14 @@ function parseURL(url) {
   let type = "svg"
 
   const urlParts = url.replace("/a/", "").split(".");
+  const urlPartsLen = urlParts.length
 
   // Handle ENS domains
-  if (urlParts[1] === "eth") {
-    addressFromUrl = `${urlParts[0]}.${urlParts[1]}`
-    if (urlParts[2]) {
-      type = urlParts[2];
-    }
+  if (urlPartsLen > 2 && urlParts[urlPartsLen-2] === "eth") {
+    addressFromUrl = urlParts.slice(0, urlPartsLen-1).join(".")
+    type = urlParts[urlPartsLen-1];
+  } else if (urlPartsLen > 1 && urlParts[urlParts.length-1] === "eth") {
+    addressFromUrl = urlParts.slice(0, urlPartsLen).join(".")
   } else {
     addressFromUrl = urlParts[0];
     if (urlParts[1]) {
