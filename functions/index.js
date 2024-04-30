@@ -1,5 +1,11 @@
 const functions = require('firebase-functions');
+const {onRequest} = require("firebase-functions/v2/https");
 const ethers = require('ethers')
+const {defineString} = require("firebase-functions/params");
+const { utils } = require('ethers');
+
+const { AlchemyProvider, ApiKeyCredential } = require('@ethersproject/providers');
+
 const { AssetId } = require("caip");
 const axios = require('axios').default;
 
@@ -72,22 +78,18 @@ function throwErrorResponse(response, statusCode, error, message) {
 
 function getProvider() {
   // Fetch the Ethereum network configuration from Firebase functions configuration
-  const network = functions.config().ethereum.network;
+  // const network = functions.config().ethereum.network;
+  const network = defineString("ETHEREUM_NETWORK");
 
-  // Define provider options, currently supporting Alchemy only
-  // Extendable for Infura, Pocket, or other providers as needed
-  const options = {
-    // Uncomment and add other providers as required
-    // infura: functions.config().infura.projectid,
-    alchemy: functions.config().alchemy.key,
-    // pocket: functions.config().pocket.key,
-  };
+  // Define provider options, using ApiKeyCredential for Alchemy
+  // const alchemyApiKey  = functions.config().alchemy.key;
+  const alchemyApiKey = defineString("ALCHEMY_KEY");
 
   // Initialize the Ethereum provider using Alchemy
-  // This can be adjusted to use a different provider by changing the class used below
-  const provider = new ethers.providers.AlchemyProvider(network, options.alchemy);
+  const provider = new AlchemyProvider(network, alchemyApiKey);
 
-  // Ensure the provider is correctly initialized before returning
+
+  // Check and log the initialization status of the provider
   if (provider) {
     console.log("Ethereum provider initialized successfully.");
     return provider;
@@ -99,6 +101,7 @@ function getProvider() {
 
 async function getEthereumAddress(addressString) {
   let address;
+
   // Check if the address string includes '.eth' to handle ENS names
   if (addressString.includes(".eth")) {
     // Get Ethereum provider instance
@@ -113,7 +116,7 @@ async function getEthereumAddress(addressString) {
   }
 
   // Validate and normalize the Ethereum address using ethers.js utility
-  const ethereumAddress = ethers.utils.getAddress(address);
+  const ethereumAddress = ethers.getAddress(address);
 
   // Log the normalized Ethereum address for debugging purposes
   console.log(`Normalized Ethereum address: ${ethereumAddress}`);
@@ -258,7 +261,8 @@ async function getENSAvatar(addressString) {
 }
 
 
-exports.avatar = functions.https.onRequest(async (request, response) => {
+// exports.avatar = functions.https.onRequest(async (request, response) => {
+exports.avatar = onRequest({cors: true}, async (request, response) => {
   // Attempt to parse the URL to extract relevant parameters
   let urlParams, ethereumAddress;
   try {
