@@ -20,5 +20,9 @@
         "destination": "/index.html"
       }
     ]
+  },
+   "functions": {
+    "source": "functions",
+    "runtime": "nodejs18" // or nodejs14, nodejs16 or nodejs20
   }
 }
