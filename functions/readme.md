@@ -1,4 +1,4 @@
-# harperreed/avatars-api 🎭
+
 
 This repository contains an API for generating and serving Ethereum "blockie" identicons. The identicons can be generated as SVG or PNG images. The API also supports fetching ENS (Ethereum Name Service) avatars if available for a given Ethereum address. 🌈
 
