@@ -79,11 +79,12 @@ function throwErrorResponse(response, statusCode, error, message) {
 function getProvider() {
   // Fetch the Ethereum network configuration from Firebase functions configuration
   // const network = functions.config().ethereum.network;
-  const network = defineString("ETHEREUM_NETWORK");
+  const network = process.env.ETHEREUM_NETWORK;
+  console.log(network)
 
   // Define provider options, using ApiKeyCredential for Alchemy
   // const alchemyApiKey  = functions.config().alchemy.key;
-  const alchemyApiKey = defineString("ALCHEMY_KEY");
+  const alchemyApiKey = process.env.ALCHEMY_KEY;
 
   // Initialize the Ethereum provider using Alchemy
   const provider = new AlchemyProvider(network, alchemyApiKey);
