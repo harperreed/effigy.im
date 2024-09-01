@@ -8,10 +8,13 @@ const { AlchemyProvider, ApiKeyCredential } = require('@ethersproject/providers'
 
 const { AssetId } = require("caip");
 const axios = require('axios').default;
+const NodeCache = require('node-cache');
 
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
 
+// Initialize cache
+const cache = new NodeCache({ stdTTL: 3600 }); // Cache for 1 hour
 
 /* Davatars is great */
 const erc721Abi = [
@@ -200,6 +203,27 @@ async function grabImageUriContract(type, address, tokenId, ownerAddress) {
   }
 }
 
+async function generateAndCacheIdenticon(ethereumAddress, type) {
+  const cacheKey = `${ethereumAddress}-${type}`;
+  let iconBody = cache.get(cacheKey);
+
+  if (iconBody === undefined) {
+    console.log(`Generating new ${type} identicon for ${ethereumAddress}`);
+    if (type === 'svg') {
+      iconBody = renderSVG({ seed: ethereumAddress.toLowerCase() });
+    } else if (type === 'png') {
+      iconBody = await renderPNG({ seed: ethereumAddress.toLowerCase() });
+    } else {
+      throw new Error(`Unsupported identicon type: ${type}`);
+    }
+    cache.set(cacheKey, iconBody);
+  } else {
+    console.log(`Using cached ${type} identicon for ${ethereumAddress}`);
+  }
+
+  return iconBody;
+}
+
 async function getENSAvatar(addressString) {
   try {
     // Initialize provider to interact with Ethereum blockchain
@@ -262,7 +286,6 @@ async function getENSAvatar(addressString) {
 }
 
 
-// exports.avatar = functions.https.onRequest(async (request, response) => {
 exports.avatar = onRequest({cors: true}, async (request, response) => {
   // Attempt to parse the URL to extract relevant parameters
   let urlParams, ethereumAddress;
@@ -295,29 +318,18 @@ exports.avatar = onRequest({cors: true}, async (request, response) => {
     type = "ens";
   }
 
-  const addressSeed = ethereumAddress.toLowerCase(); // Seed for generating blockies
   let filename, contentType, iconBody, etag;
 
   // Render avatar based on type or redirect if ENS avatar is found
   try {
     switch (type) {
       case 'svg':
-        iconBody = renderSVG({
-          seed: addressSeed,
-        });
-        filename = `${ethereumAddress}.svg`;
-        contentType = 'image/svg+xml';
-        etag = require('crypto').createHash('md5').update(iconBody).digest('hex');
-        console.log(`SVG avatar generated for ${ethereumAddress}`);
-        break;
       case 'png':
-        iconBody = renderPNG({
-          seed: addressSeed,
-        });
-        filename = `${ethereumAddress}.png`;
-        contentType = 'image/png';
+        iconBody = await generateAndCacheIdenticon(ethereumAddress, type);
+        filename = `${ethereumAddress}.${type}`;
+        contentType = type === 'svg' ? 'image/svg+xml' : 'image/png';
         etag = require('crypto').createHash('md5').update(iconBody).digest('hex');
-        console.log(`PNG avatar generated for ${ethereumAddress}`);
+        console.log(`${type.toUpperCase()} avatar generated or retrieved from cache for ${ethereumAddress}`);
         break;
       case 'ens':
         // Redirect to ENS avatar URL if available
