@@ -26,3 +26,19 @@
     "runtime": "nodejs18" // or nodejs14, nodejs16 or nodejs20
   }
 }
+
+{
+  "database": {
+    "rules": {
+      ".read": false,
+      ".write": false,
+      "addressCache": {
+        ".read": true,
+        ".write": "auth != null"
+      }
+    }
+  },
+  "functions": {
+    "source": "functions"
+  }
+}

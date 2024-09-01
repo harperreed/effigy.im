@@ -12,6 +12,9 @@ const axios = require('axios').default;
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
 
+const admin = require('firebase-admin');
+admin.initializeApp();
+
 
 /* Davatars is great */
 const erc721Abi = [
@@ -100,8 +103,17 @@ function getProvider() {
   }
 }
 
+const { getCachedAddress, setCachedAddress } = require('./database');
+
 async function getEthereumAddress(addressString) {
   let address;
+
+  // Check cache first
+  const cachedAddress = await getCachedAddress(addressString);
+  if (cachedAddress) {
+    console.log(`Cache hit for ${addressString}: ${cachedAddress}`);
+    return cachedAddress;
+  }
 
   // Check if the address string includes '.eth' to handle ENS names
   if (addressString.includes(".eth")) {
@@ -121,6 +133,9 @@ async function getEthereumAddress(addressString) {
 
   // Log the normalized Ethereum address for debugging purposes
   console.log(`Normalized Ethereum address: ${ethereumAddress}`);
+
+  // Cache the resolved address
+  await setCachedAddress(addressString, ethereumAddress);
 
   // Return the normalized Ethereum address
   return ethereumAddress;
