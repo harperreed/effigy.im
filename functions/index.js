@@ -11,6 +11,7 @@ const axios = require('axios').default;
 
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
+const { blockieExists, uploadBlockie, getBlockieUrl } = require('./lib/cloudStorage');
 
 
 /* Davatars is great */
@@ -286,6 +287,15 @@ exports.avatar = onRequest({cors: true}, async (request, response) => {
     return throwErrorResponse(response, 500, "Invalid ethereum address", "Could not resolve to a valid Ethereum address.");
   }
 
+  // Check if blockie exists in cloud storage
+  const blockieCached = await blockieExists(ethereumAddress, type);
+  if (blockieCached) {
+    console.log(`Redirecting to cached blockie: ${ethereumAddress}.${type}`);
+    response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
+    response.redirect(getBlockieUrl(ethereumAddress, type));
+    return;
+  }
+
   // Attempt to fetch ENS avatar if available
   const ensAvatar = await getENSAvatar(ethereumAddress);
   console.log(ensAvatar ? `ENS avatar found: ${ensAvatar}` : "No ENS avatar found, proceeding with blockies generation.");
@@ -329,6 +339,10 @@ exports.avatar = onRequest({cors: true}, async (request, response) => {
         console.error(`Invalid type: ${type}`);
         return throwErrorResponse(response, 500, "invalid type", `The requested type '${type}' is not supported.`);
     }
+
+    // Upload the generated blockie to cloud storage
+    await uploadBlockie(ethereumAddress, type, iconBody);
+    console.log(`Uploaded ${type} blockie for ${ethereumAddress} to cloud storage`);
 
     // Check if client's ETag matches the current ETag
     if (request.headers['if-none-match'] === etag) {
