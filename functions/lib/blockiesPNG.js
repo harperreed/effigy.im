@@ -79,8 +79,28 @@ function fillRect(png, x, y, w, h, color) {
   }
 }
 
-function render(opts) {
+const admin = require('firebase-admin');
+const db = admin.database();
+
+async function getCachedPNG(seed) {
+  const snapshot = await db.ref(`cache/png/${seed}`).once('value');
+  const cachedData = snapshot.val();
+  return cachedData ? Buffer.from(cachedData, 'base64') : null;
+}
+
+async function setCachedPNG(seed, pngBuffer) {
+  await db.ref(`cache/png/${seed}`).set(pngBuffer.toString('base64'));
+}
+
+async function render(opts) {
   opts = buildOptions(opts);
+
+  // Check cache first
+  const cachedPNG = await getCachedPNG(opts.seed);
+  if (cachedPNG) {
+    console.log(`Using cached PNG for seed: ${opts.seed}`);
+    return cachedPNG;
+  }
 
   const imageData = createImageData(opts.size);
   const width = Math.sqrt(imageData.length);
@@ -100,15 +120,13 @@ function render(opts) {
       fillRect(p, col * opts.scale, row * opts.scale, opts.scale, opts.scale, pngColor);
     }
   }
-  // return p.getDump()
-  // return p.getBase64()
-  // let buff = Buffer(p.getBase64(), 'base64');
-  // let text = buff.toString('ascii');
-  // return text
-  // return `${}`;
-  var buf = Buffer.from(p.getBase64(), 'base64');
-  return buf
-}
 
+  const pngBuffer = Buffer.from(p.getBase64(), 'base64');
+
+  // Cache the generated PNG
+  await setCachedPNG(opts.seed, pngBuffer);
+
+  return pngBuffer;
+}
 
 module.exports = render;
