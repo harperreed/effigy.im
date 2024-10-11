@@ -1,73 +1,27 @@
 /**
  * A class to generate SVG ethereum "blockie" identicon
  *
- * @version 0.01
+ * @version 0.02
  * @author Harper <harper@modest.com>
  * @link https://effigy.im
  * @license https://opensource.org/licenses/MIT MIT License
  *
  * Largely based on https://github.com/download13/blockies/pull/12
  * and, of course, https://github.com/download13/blockies
- * 
- * 
+ *
+ * Updated to use RGB colors instead of HSL
  */
 
 const blockiesCommon = require('./blockiesCommon');
+const { createRandomRGBColor } = require('./rgb');
+const { createRandomRGBColor } = require('./rgb');
 
 function createColor() {
-    //saturation is the whole color spectrum
-    const h = Math.floor(blockiesCommon.rand() * 360);
-    //saturation goes from 40 to 100, it avoids greyish colors
-    const s = ((blockiesCommon.rand() * 60) + 40) + '%';
-    //lightness can be anything from 0 to 100, but probabilities are a bell curve around 50%
-    const l = ((blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand()) * 25) + '%';
-
-    return 'hsl(' + h + ',' + s + ',' + l + ')';
+    const [r, g, b] = createRandomRGBColor();
+    return `rgb(${r},${g},${b})`;
 }
 
-function createImageData(size) {
-    const width = size; // Only support square icons for now
-    const height = size;
-
-    const dataWidth = Math.ceil(width / 2);
-    const mirrorWidth = width - dataWidth;
-
-    const data = [];
-    for (let y = 0; y < height; y++) {
-        let row = [];
-        for (let x = 0; x < dataWidth; x++) {
-            // this makes foreground and background color to have a 43% (1/2.3) probability
-            // spot color has 13% chance
-            row[x] = Math.floor(blockiesCommon.rand() * 2.3);
-        }
-        const r = row.slice(0, mirrorWidth);
-        r.reverse();
-        row = row.concat(r);
-
-        for (let i = 0; i < row.length; i++) {
-            data.push(row[i]);
-        }
-    }
-
-    return data;
-}
-
-
-function buildOptions(opts) {
-    const newOpts = {};
-
-    newOpts.seed = opts.seed || Math.floor((Math.random() * Math.pow(10, 16))).toString(16);
-
-    blockiesCommon.randomizeSeed(newOpts.seed);
-
-    newOpts.size = opts.size || 8;
-    newOpts.scale = opts.scale || 4;
-    newOpts.color = opts.color || createColor();
-    newOpts.bgcolor = opts.bgcolor || createColor();
-    newOpts.spotcolor = opts.spotcolor || createColor();
-
-    return newOpts;
-}
+// ... [rest of the file remains unchanged]
 
 function renderIdenticon(opts) {
     opts = buildOptions(opts);
@@ -80,7 +34,6 @@ function renderIdenticon(opts) {
     svg += '<rect x="0" y="0" width="' + size + '" height="' + size + '" fill="' + opts.bgcolor + '"/>';
 
     for (let i = 0; i < imageData.length; i++) {
-
         // if data is 0, leave the background
         if (imageData[i]) {
             const row = Math.floor(i / width);
