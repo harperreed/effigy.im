@@ -36,6 +36,15 @@ jest.mock('@ethersproject/providers', () => ({
   }))
 }));
 
+// Mock ethers
+jest.mock('ethers', () => ({
+  getAddress: jest.fn(addr => addr),
+  Contract: jest.fn().mockImplementation(() => ({
+    ownerOf: jest.fn().mockResolvedValue('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'),
+    tokenURI: jest.fn().mockResolvedValue('https://example.com/token/1')
+  }))
+}));
+
 // Mock axios for HTTP requests
 jest.mock('axios', () => ({
   default: {
