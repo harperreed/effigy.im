@@ -13,6 +13,7 @@
 const pnglib = require("./pnglib");
 const hsl2rgb = require("./hsl2rgb");
 const blockiesCommon = require("./blockiesCommon");
+const wasmModule = require("./pixelOperations.wasm");
 
 function createColor() {
 	//saturation is the whole color spectrum
@@ -92,7 +93,7 @@ function fillRect(png, x, y, w, h, color) {
 	}
 }
 
-function render(opts) {
+async function render(opts) {
 	opts = buildOptions(opts);
 
 	const imageData = createImageData(opts.size);
@@ -102,6 +103,8 @@ function render(opts) {
 	const bgcolor = p.color(...hsl2rgb(...opts.bgcolor));
 	const color = p.color(...hsl2rgb(...opts.color));
 	const spotcolor = p.color(...hsl2rgb(...opts.spotcolor));
+
+	await wasmModule.initialize();
 
 	for (let i = 0; i < imageData.length; i++) {
 		const row = Math.floor(i / width);

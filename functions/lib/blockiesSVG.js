@@ -13,7 +13,7 @@
  */
 
 const blockiesCommon = require("./blockiesCommon");
-const hsl2rgb = require("./hsl2rgb");
+const wasmModule = require("./pixelOperations.wasm");
 
 function createColor() {
 	//saturation is the whole color spectrum
@@ -28,7 +28,7 @@ function createColor() {
 			blockiesCommon.rand()) *
 		25;
 
-	return hsl2rgb(h / 360, s / 100, l / 100);
+	return [h / 360, s / 100, l / 100];
 }
 
 function createImageData(size) {
@@ -84,7 +84,7 @@ function buildOptions(opts) {
 	return newOpts;
 }
 
-function renderIdenticon(opts) {
+async function renderIdenticon(opts) {
 	opts = buildOptions(opts);
 	const imageData = createImageData(opts.size);
 	const width = Math.sqrt(imageData.length);
@@ -105,6 +105,8 @@ function renderIdenticon(opts) {
 		'" fill="rgb(' +
 		opts.bgcolor.join(",") +
 		')"/>';
+
+	await wasmModule.initialize();
 
 	for (let i = 0; i < imageData.length; i++) {
 		// if data is 0, leave the background

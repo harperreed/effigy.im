@@ -1,7 +1,12 @@
 const renderPNG = require("../lib/blockiesPNG");
 const renderSVG = require("../lib/blockiesSVG");
+const wasmModule = require("../lib/pixelOperations.wasm");
 
 describe("Blockies Image Generation", () => {
+	beforeAll(async () => {
+		await wasmModule.initialize();
+	});
+
 	describe("SVG Generation", () => {
 		test("generates consistent SVG for same seed", () => {
 			const svg1 = renderSVG({ seed: "test123", size: 8, scale: 4 });
@@ -70,6 +75,12 @@ describe("Blockies Image Generation", () => {
 		test("handles invalid size parameter", () => {
 			expect(() => renderSVG({ seed: "test", size: -1 })).toThrow();
 			expect(() => renderPNG({ seed: "test", size: -1 })).toThrow();
+		});
+	});
+
+	describe("WebAssembly Integration", () => {
+		test("initializes WebAssembly module", async () => {
+			await expect(wasmModule.initialize()).resolves.not.toThrow();
 		});
 	});
 });
