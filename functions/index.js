@@ -101,7 +101,8 @@ function getProvider() {
   }
 }
 
-async function getEthereumAddress(addressString) {
+// Export the function so it can be tested
+exports.getEthereumAddress = async function getEthereumAddress(addressString) {
   let address;
 
   // Check if the address string includes '.eth' to handle ENS names
