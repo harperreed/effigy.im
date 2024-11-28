@@ -241,7 +241,7 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
 				);
 
 				// Attempt to retrieve the image URI associated with the token
-				const tokenImageUri = await grabImageUriContract(
+				const tokenImageUri = await exports.grabImageUriContract(
 					tokenType,
 					contractAddress,
 					tokenId,

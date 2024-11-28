@@ -1,11 +1,14 @@
 const ethers = require("ethers");
 const axios = require("axios");
 
+const { grabImageUriContract } = require("../index");
+
 // Mock the getProvider function
 jest.mock("../index", () => ({
   getProvider: jest.fn(() => ({
     // Add mock provider methods as needed
-  }))
+  })),
+  grabImageUriContract: jest.requireActual("../index").grabImageUriContract
 }));
 
 // Mock axios
