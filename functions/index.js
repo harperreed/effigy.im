@@ -96,7 +96,7 @@ function getProvider() {
 
     // Initialize the Ethereum provider using Alchemy
     // const provider = new AlchemyProvider(network, alchemyApiKey);
-    provider = new CloudflareProvider();
+    const provider = new CloudflareProvider();
 
     // Check and log the initialization status of the provider
     if (provider) {
