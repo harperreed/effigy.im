@@ -25,7 +25,8 @@ const erc1155Abi = [
 ];
 
 
-function parseURL(url) {
+// Export the function so it can be tested
+exports.parseURL = function parseURL(url) {
   // Remove the initial part of the URL to get the relevant parts
   const cleanedUrl = url.replace("/a/", "");
   // Split the URL by '.' to separate different parts
