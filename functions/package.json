@@ -21,7 +21,9 @@
     "firebase-functions": "^4.9.0"
   },
   "devDependencies": {
-    "firebase-functions-test": "^3.2.0"
+    "chai": "^5.1.2",
+    "firebase-functions-test": "^3.2.0",
+    "mocha": "^10.8.2"
   },
   "private": true
 }
