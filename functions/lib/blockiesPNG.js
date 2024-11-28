@@ -85,10 +85,10 @@ function buildOptions(opts) {
 
 // Modifies the passed PNG to fill in a specified rectangle
 function fillRect(png, x, y, w, h, color) {
-	for (let i = 0; i < w; i++) {
-		for (let j = 0; j < h; j++) {
-			png.buffer[png.index(x + i, y + j)] = color;
-		}
+	const startIndex = png.index(x, y);
+	const endIndex = png.index(x + w - 1, y + h - 1);
+	for (let i = startIndex; i <= endIndex; i++) {
+		png.buffer[i] = color;
 	}
 }
 
