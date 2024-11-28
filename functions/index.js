@@ -158,7 +158,12 @@ async function crawlTokenUri(tokenUri) {
 }
 
 // Export the function so it can be tested
-exports.grabImageUriContract = async function grabImageUriContract(type, address, tokenId, ownerAddress) {
+exports.grabImageUriContract = async function grabImageUriContract(
+	type,
+	address,
+	tokenId,
+	ownerAddress,
+) {
 	const provider = getProvider();
 
 	let abi;
@@ -205,7 +210,7 @@ exports.grabImageUriContract = async function grabImageUriContract(type, address
 		console.warn("No image found in token metadata");
 		return undefined;
 	}
-}
+};
 
 // Export the function so it can be tested
 exports.getENSAvatar = async function getENSAvatar(addressString) {
@@ -294,55 +299,60 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
 };
 
 exports.avatar = onRequest({ cors: true }, async (request, response) => {
-  const { generateAvatar, setAvatarHeaders } = require("./lib/avatarHelpers");
-  const { CACHE_CONTROL, AVATAR_TYPES } = require("./lib/constants");
+	const { generateAvatar, setAvatarHeaders } = require("./lib/avatarHelpers");
+	const { CACHE_CONTROL, AVATAR_TYPES } = require("./lib/constants");
 
-  try {
-    // Parse URL and validate address
-    const urlParams = exports.parseURL(request.url);
-    console.log(`URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`);
-    
-    const ethereumAddress = await exports.getEthereumAddress(urlParams.addressFromUrl);
-    console.log(`Ethereum address resolved: ${ethereumAddress}`);
+	try {
+		// Parse URL and validate address
+		const urlParams = exports.parseURL(request.url);
+		console.log(
+			`URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`,
+		);
 
-    // Check for ENS avatar
-    const ensAvatar = await exports.getENSAvatar(ethereumAddress);
-    if (ensAvatar) {
-      console.log(`Redirecting to ENS avatar: ${ensAvatar}`);
-      response.set("Cache-Control", CACHE_CONTROL.LONG);
-      response.redirect(ensAvatar);
-      return;
-    }
+		const ethereumAddress = await exports.getEthereumAddress(
+			urlParams.addressFromUrl,
+		);
+		console.log(`Ethereum address resolved: ${ethereumAddress}`);
 
-    // Generate avatar if no ENS avatar found
-    const type = urlParams.type;
-    const addressSeed = ethereumAddress.toLowerCase();
-    
-    const avatarData = generateAvatar(type, addressSeed);
-    
-    // Handle ETag caching
-    if (request.headers["if-none-match"] === avatarData.etag) {
-      console.log("ETag matches - sending 304 Not Modified");
-      response.status(304).end();
-      return;
-    }
+		// Check for ENS avatar
+		const ensAvatar = await exports.getENSAvatar(ethereumAddress);
+		if (ensAvatar) {
+			console.log(`Redirecting to ENS avatar: ${ensAvatar}`);
+			response.set("Cache-Control", CACHE_CONTROL.LONG);
+			response.redirect(ensAvatar);
+			return;
+		}
 
-    // Set headers and send response
-    setAvatarHeaders(response, avatarData);
-    response.set("Cache-Control", CACHE_CONTROL.LONG);
-    response.send(avatarData.body);
+		// Generate avatar if no ENS avatar found
+		const type = urlParams.type;
+		const addressSeed = ethereumAddress.toLowerCase();
 
-  } catch (error) {
-    console.error("Error handling avatar request:", error);
-    
-    const statusCode = error.message.includes("Invalid url format") ? 404 : 500;
-    const errorCode = error.message.includes("Invalid url format") ? "invalid_url" : "server_error";
-    
-    throwErrorResponse(
-      response,
-      statusCode,
-      errorCode,
-      error.message || "An error occurred while processing the avatar request"
-    );
-  }
+		const avatarData = generateAvatar(type, addressSeed);
+
+		// Handle ETag caching
+		if (request.headers["if-none-match"] === avatarData.etag) {
+			console.log("ETag matches - sending 304 Not Modified");
+			response.status(304).end();
+			return;
+		}
+
+		// Set headers and send response
+		setAvatarHeaders(response, avatarData);
+		response.set("Cache-Control", CACHE_CONTROL.LONG);
+		response.send(avatarData.body);
+	} catch (error) {
+		console.error("Error handling avatar request:", error);
+
+		const statusCode = error.message.includes("Invalid url format") ? 404 : 500;
+		const errorCode = error.message.includes("Invalid url format")
+			? "invalid_url"
+			: "server_error";
+
+		throwErrorResponse(
+			response,
+			statusCode,
+			errorCode,
+			error.message || "An error occurred while processing the avatar request",
+		);
+	}
 });
