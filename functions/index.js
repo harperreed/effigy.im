@@ -306,7 +306,7 @@ exports.avatar = onRequest({ cors: true }, async (request, response) => {
     console.log(`Ethereum address resolved: ${ethereumAddress}`);
 
     // Check for ENS avatar
-    const ensAvatar = await getENSAvatar(ethereumAddress);
+    const ensAvatar = await exports.getENSAvatar(ethereumAddress);
     if (ensAvatar) {
       console.log(`Redirecting to ENS avatar: ${ensAvatar}`);
       response.set("Cache-Control", CACHE_CONTROL.LONG);
