@@ -14,6 +14,10 @@ const axios = require("axios").default;
 
 const renderSVG = require("./lib/blockiesSVG");
 const renderPNG = require("./lib/blockiesPNG");
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+const db = admin.firestore();
 
 /* Davatars is great */
 const erc721Abi = [
@@ -25,6 +29,10 @@ const erc1155Abi = [
 	"function balanceOf(address _owner, uint256 _id) view returns (uint256)",
 	"function uri(uint256 _id) view returns (string)",
 ];
+
+// In-memory cache for ENS lookup responses
+const ensCache = new Map();
+const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
 // Export the function so it can be tested
 exports.parseURL = function parseURL(url) {
@@ -215,6 +223,23 @@ exports.grabImageUriContract = async function grabImageUriContract(
 // Export the function so it can be tested
 exports.getENSAvatar = async function getENSAvatar(addressString) {
 	try {
+		// Check cache first
+		const cachedResponse = ensCache.get(addressString);
+		if (cachedResponse && Date.now() - cachedResponse.timestamp < CACHE_TTL) {
+			console.log(`Cache hit for address: ${addressString}`);
+			return cachedResponse.avatarUrl;
+		}
+
+		// Check Firestore cache
+		const doc = await db.collection("ensCache").doc(addressString).get();
+		if (doc.exists) {
+			const data = doc.data();
+			if (Date.now() - data.timestamp.toMillis() < CACHE_TTL) {
+				console.log(`Firestore cache hit for address: ${addressString}`);
+				return data.avatarUrl;
+			}
+		}
+
 		// Initialize provider to interact with Ethereum blockchain
 		const provider = getProvider();
 		// Lookup the ENS name corresponding to the provided Ethereum address
@@ -288,6 +313,16 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
 
 		// Log the resolved ENS avatar URL
 		console.log("Resolved ENS avatar:", avatarUrl);
+
+		// Store in cache
+		ensCache.set(addressString, { avatarUrl, timestamp: Date.now() });
+
+		// Store in Firestore cache
+		await db.collection("ensCache").doc(addressString).set({
+			avatarUrl,
+			timestamp: admin.firestore.FieldValue.serverTimestamp(),
+		});
+
 		// Return the web-accessible avatar URL
 		return avatarUrl;
 	} catch (error) {

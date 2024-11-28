@@ -163,4 +163,26 @@ describe("getENSAvatar", () => {
 		);
 		expect(result).toBe("malformed://avatar/url");
 	});
+
+	test("caches ENS lookup responses", async () => {
+		process.env.TEST_AVATAR_TYPE = "http";
+		const address = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+
+		// First call to populate the cache
+		const firstResult = await getENSAvatar(address);
+		expect(firstResult).toBe("https://example.com/avatar.png");
+
+		// Modify the mock to return a different value
+		const provider = require("@ethersproject/providers");
+		provider.AlchemyProvider.mockImplementationOnce(() => ({
+			lookupAddress: jest.fn().mockResolvedValue("vitalik.eth"),
+			getResolver: jest.fn().mockResolvedValue({
+				getText: jest.fn().mockResolvedValue("https://example.com/new-avatar.png"),
+			}),
+		}));
+
+		// Second call should return the cached value
+		const secondResult = await getENSAvatar(address);
+		expect(secondResult).toBe("https://example.com/avatar.png");
+	});
 });
