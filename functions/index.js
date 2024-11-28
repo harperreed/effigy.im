@@ -218,14 +218,25 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
     let avatarUrl;
 
     // Check if the avatar text indicates an EIP-155 asset
-    if (avatarText.includes("eip155:")) {
-      // Parse the asset ID from the avatar text
-      const assetId = new AssetId(avatarText);
-      // Attempt to retrieve the image URI associated with the token
-      const tokenImageUri = await grabImageUriContract(assetId.assetName.namespace, assetId.assetName.reference, assetId.tokenId, addressString);
-      // If a token image URI is found, use it as the avatar URL
-      if (tokenImageUri) {
-        avatarUrl = tokenImageUri;
+    if (avatarText && avatarText.includes("eip155:")) {
+      try {
+        // Parse the asset ID from the avatar text
+        const assetId = new AssetId(avatarText);
+        // Extract token type from namespace (erc721 or erc1155)
+        const tokenType = assetId.assetName.namespace.toLowerCase();
+        // Get contract address from reference
+        const contractAddress = assetId.assetName.reference;
+        // Get token ID
+        const tokenId = assetId.tokenId;
+        
+        // Attempt to retrieve the image URI associated with the token
+        const tokenImageUri = await grabImageUriContract(tokenType, contractAddress, tokenId, addressString);
+        // If a token image URI is found, use it as the avatar URL
+        if (tokenImageUri) {
+          avatarUrl = tokenImageUri;
+        }
+      } catch (error) {
+        console.error("Error processing EIP-155 avatar:", error);
       }
     } else {
       // If the avatar text does not indicate an EIP-155 asset, use it directly as the URL

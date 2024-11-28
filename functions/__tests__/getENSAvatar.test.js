@@ -101,6 +101,15 @@ describe('getENSAvatar', () => {
   });
 
   test('resolves EIP-155 asset avatar', async () => {
+    // Mock ethers Contract
+    const mockContract = {
+      ownerOf: jest.fn().mockResolvedValue('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'),
+      tokenURI: jest.fn().mockResolvedValue('https://example.com/token/1')
+    };
+    
+    const ethers = require('ethers');
+    ethers.Contract = jest.fn().mockImplementation(() => mockContract);
+    
     process.env.TEST_AVATAR_TYPE = 'eip155';
     const result = await getENSAvatar('0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045');
     expect(result).toBe('https://example.com/nft-image.png');
