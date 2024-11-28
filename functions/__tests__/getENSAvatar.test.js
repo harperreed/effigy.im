@@ -177,7 +177,9 @@ describe("getENSAvatar", () => {
 		provider.AlchemyProvider.mockImplementationOnce(() => ({
 			lookupAddress: jest.fn().mockResolvedValue("vitalik.eth"),
 			getResolver: jest.fn().mockResolvedValue({
-				getText: jest.fn().mockResolvedValue("https://example.com/new-avatar.png"),
+				getText: jest
+					.fn()
+					.mockResolvedValue("https://example.com/new-avatar.png"),
 			}),
 		}));
 
