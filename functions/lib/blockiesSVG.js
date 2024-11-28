@@ -13,16 +13,17 @@
  */
 
 const blockiesCommon = require('./blockiesCommon');
+const hsl2rgb = require('./hsl2rgb');
 
 function createColor() {
     //saturation is the whole color spectrum
     const h = Math.floor(blockiesCommon.rand() * 360);
     //saturation goes from 40 to 100, it avoids greyish colors
-    const s = ((blockiesCommon.rand() * 60) + 40) + '%';
+    const s = blockiesCommon.rand() * 60 + 40;
     //lightness can be anything from 0 to 100, but probabilities are a bell curve around 50%
-    const l = ((blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand()) * 25) + '%';
+    const l = (blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand() + blockiesCommon.rand()) * 25;
 
-    return 'hsl(' + h + ',' + s + ',' + l + ')';
+    return hsl2rgb(h / 360, s / 100, l / 100);
 }
 
 function createImageData(size) {
@@ -77,7 +78,7 @@ function renderIdenticon(opts) {
     const size = opts.size * opts.scale;
 
     let svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '" style="shape-rendering: crispEdges">';
-    svg += '<rect x="0" y="0" width="' + size + '" height="' + size + '" fill="' + opts.bgcolor + '"/>';
+    svg += '<rect x="0" y="0" width="' + size + '" height="' + size + '" fill="rgb(' + opts.bgcolor.join(',') + ')"/>';
 
     for (let i = 0; i < imageData.length; i++) {
 
@@ -89,7 +90,7 @@ function renderIdenticon(opts) {
             // if data is 2, choose spot color, if 1 choose foreground
             const fill = (imageData[i] == 1) ? opts.color : opts.spotcolor;
 
-            svg += '<rect x="' + col * opts.scale + '" y="' + row * opts.scale + '" width="' + opts.scale + '" height="' + opts.scale + '" fill="' + fill + '"/>';
+            svg += '<rect x="' + col * opts.scale + '" y="' + row * opts.scale + '" width="' + opts.scale + '" height="' + opts.scale + '" fill="rgb(' + fill.join(',') + ')"/>';
         }
     }
     return svg + '</svg>';
