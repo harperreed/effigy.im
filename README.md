@@ -36,6 +36,14 @@ To use the service in an image tag, use the following format:
 
 If an ENS avatar is available for the provided Ethereum address or ENS name, effigy.im will redirect to the avatar URL. 🌠
 
+### Rate Limiting
+
+To prevent abuse, the API is rate-limited. Each IP address is allowed up to 100 requests per 15 minutes. The rate limiting middleware automatically adds the following headers to the responses:
+
+- `X-RateLimit-Limit`: The maximum number of requests that the client is allowed to make in the current window.
+- `X-RateLimit-Remaining`: The number of requests remaining in the current window.
+- `X-RateLimit-Reset`: The time at which the current rate limit window resets.
+
 ## Repository Structure 📂
 
 The repository is organized as follows:

@@ -3,6 +3,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const ethers = require("ethers");
 const { defineString } = require("firebase-functions/params");
 const { utils } = require("ethers");
+const rateLimit = require("express-rate-limit");
 
 const {
 	AlchemyProvider,
@@ -25,6 +26,14 @@ const erc1155Abi = [
 	"function balanceOf(address _owner, uint256 _id) view returns (uint256)",
 	"function uri(uint256 _id) view returns (string)",
 ];
+
+// Define rate limiting middleware with a limit of 100 requests per 15 minutes per IP
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 100, // limit each IP to 100 requests per windowMs
+	standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+	legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
 
 // Export the function so it can be tested
 exports.parseURL = function parseURL(url) {
@@ -294,7 +303,7 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
 };
 
 // exports.avatar = functions.https.onRequest(async (request, response) => {
-exports.avatar = onRequest({ cors: true }, async (request, response) => {
+exports.avatar = onRequest({ cors: true }, limiter, async (request, response) => {
 	// Attempt to parse the URL to extract relevant parameters
 	let urlParams, ethereumAddress;
 	try {
