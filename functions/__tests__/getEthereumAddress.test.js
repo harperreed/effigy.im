@@ -6,10 +6,12 @@ jest.mock('@ethersproject/providers', () => ({
   AlchemyProvider: jest.fn().mockImplementation(() => ({
     resolveName: jest.fn().mockImplementation(async (ensName) => {
       // Mock ENS resolution
-      if (ensName === 'vitalik.eth') {
+      // Case-insensitive ENS name comparison
+      const normalizedName = ensName.toLowerCase();
+      if (normalizedName === 'vitalik.eth') {
         return '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045';
       }
-      if (ensName === 'nick.eth') {
+      if (normalizedName === 'nick.eth') {
         return '0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5';
       }
       throw new Error('ENS name not found');
