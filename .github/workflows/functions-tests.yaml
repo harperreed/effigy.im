@@ -1,0 +1,39 @@
+name: Run Firebase Function Tests
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "functions/**"
+            - ".github/workflows/biome-reviewdog.yml"
+    pull_request:
+        branches: [main]
+        paths:
+            - "functions/**"
+            - ".github/workflows/biome-reviewdog.yml"
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: functions
+
+        steps:
+            # Checkout the repository
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            # Set up Node.js
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "16" # Adjust the Node.js version if needed
+
+            # Install dependencies
+            - name: Install dependencies
+              run: npm install
+
+            # Run tests
+            - name: Run Tests
+              run: npm test

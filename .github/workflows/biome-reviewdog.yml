@@ -1,0 +1,28 @@
+name: reviewdog
+on:
+    push:
+        branches: [main]
+        paths:
+            - "functions/**"
+            - ".github/workflows/biome-reviewdog.yml"
+    pull_request:
+        branches: [main]
+        paths:
+            - "functions/**"
+            - ".github/workflows/biome-reviewdog.yml"
+jobs:
+    biome:
+        name: runner / Biome
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: functions
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: mongolyy/reviewdog-action-biome@v1
+              with:
+                  github_token: ${{ secrets.github_token }}
+                  reporter: github-pr-review
