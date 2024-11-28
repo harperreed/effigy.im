@@ -299,7 +299,7 @@ exports.avatar = onRequest({ cors: true }, async (request, response) => {
 
   try {
     // Parse URL and validate address
-    const urlParams = parseURL(request.url);
+    const urlParams = exports.parseURL(request.url);
     console.log(`URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`);
     
     const ethereumAddress = await getEthereumAddress(urlParams.addressFromUrl);
