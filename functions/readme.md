@@ -1,5 +1,3 @@
-
-
 This repository contains an API for generating and serving Ethereum "blockie" identicons. The identicons can be generated as SVG or PNG images. The API also supports fetching ENS (Ethereum Name Service) avatars if available for a given Ethereum address. 🌈
 
 ## Features ✨
@@ -9,6 +7,9 @@ This repository contains an API for generating and serving Ethereum "blockie" id
 - Redirect to ENS avatar URL if available
 - Customizable identicon colors and styles
 - Supports Ethereum addresses and ENS names as input
+- Caching mechanism for resolved Ethereum addresses and ENS names
+- Cache expiration logic to ensure data freshness
+- Persistent caching using Firebase Realtime Database
 
 ## API Endpoints 🚀
 
@@ -27,12 +28,21 @@ Where `:address` can be an Ethereum address or an ENS name. The identicon type (
 
 If an ENS avatar is available for the provided Ethereum address or ENS name, the API will redirect to the avatar URL.
 
+## Caching Mechanism 🗄️
+
+To improve efficiency and reduce unnecessary computations and API calls, a caching mechanism has been implemented. The caching mechanism includes:
+
+- **Resolved Ethereum Addresses and ENS Names**: Cached in Firebase Realtime Database to avoid repeated resolution of the same addresses or ENS names.
+- **Generated Identicons**: Cached to avoid regenerating identicons for the same addresses.
+- **Cache Expiration**: Ensures data freshness by expiring cache entries after a specified duration (e.g., 24 hours).
+
 ## Technologies Used 🛠️
 
 - Firebase Functions for serverless deployment
 - Ethers.js for interacting with the Ethereum blockchain
 - Axios for making HTTP requests
 - Various utility libraries for generating identicons and handling colors
+- Firebase Realtime Database for persistent caching
 
 ## Getting Started 🚀
 

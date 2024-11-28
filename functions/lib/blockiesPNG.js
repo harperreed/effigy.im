@@ -14,6 +14,11 @@ const pnglib = require('./pnglib');
 const hsl2rgb = require('./hsl2rgb');
 const blockiesCommon = require('./blockiesCommon');
 
+// Import Firestore to check cache before generating identicons
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
+
 function createColor() {
   //saturation is the whole color spectrum
   const h = Math.floor(blockiesCommon.rand() * 360);
@@ -79,11 +84,28 @@ function fillRect(png, x, y, w, h, color) {
   }
 }
 
-function render(opts) {
+async function render(opts) {
   opts = buildOptions(opts);
 
   const imageData = createImageData(opts.size);
   const width = Math.sqrt(imageData.length);
+
+  // Check cache before generating identicons
+  const cacheDoc = await db.collection('identiconCache').doc(opts.seed).get();
+  if (cacheDoc.exists) {
+    const cacheData = cacheDoc.data();
+    const cacheTimestamp = cacheData.timestamp.toDate();
+    const now = new Date();
+    const cacheAge = (now - cacheTimestamp) / 1000; // Cache age in seconds
+
+    // Return cached results if available and not expired
+    if (cacheAge < 86400) { // 24 hours
+      console.log(`Cache hit: ${opts.seed} identicon retrieved from cache`);
+      return Buffer.from(cacheData.iconBody, 'base64');
+    } else {
+      console.log(`Cache expired for ${opts.seed}`);
+    }
+  }
 
   const p = new pnglib(opts.size * opts.scale, opts.size * opts.scale, 3);
   const bgcolor = p.color(...hsl2rgb(...opts.bgcolor));
@@ -100,15 +122,18 @@ function render(opts) {
       fillRect(p, col * opts.scale, row * opts.scale, opts.scale, opts.scale, pngColor);
     }
   }
-  // return p.getDump()
-  // return p.getBase64()
-  // let buff = Buffer(p.getBase64(), 'base64');
-  // let text = buff.toString('ascii');
-  // return text
-  // return `${}`;
-  var buf = Buffer.from(p.getBase64(), 'base64');
-  return buf
-}
 
+  const iconBody = p.getBase64();
+  const buf = Buffer.from(iconBody, 'base64');
+
+  // Store generated identicons in the cache
+  await db.collection('identiconCache').doc(opts.seed).set({
+    type: 'png',
+    iconBody: iconBody,
+    timestamp: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  return buf;
+}
 
 module.exports = render;

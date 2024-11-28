@@ -12,6 +12,10 @@ const axios = require('axios').default;
 const renderSVG = require('./lib/blockiesSVG');
 const renderPNG = require('./lib/blockiesPNG');
 
+// Import firebase-admin and initialize Firestore
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
 
 /* Davatars is great */
 const erc721Abi = [
@@ -111,6 +115,12 @@ async function getEthereumAddress(addressString) {
     address = await provider.resolveName(addressString);
     // Log the resolved address for debugging purposes
     console.log(`Resolved ENS name ${addressString} to address ${address}`);
+
+    // Cache the resolved address
+    await db.collection('ensCache').doc(addressString).set({
+      address: address,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
   } else {
     // If not an ENS name, use the address string as is
     address = addressString;
@@ -277,13 +287,32 @@ exports.avatar = onRequest({cors: true}, async (request, response) => {
   let type = urlParams.type; // Default type is 'svg', can be overridden based on URL
   const addressFromUrl = urlParams.addressFromUrl; // Extracted Ethereum address or ENS name from URL
 
+  // Check cache before resolving addresses or generating identicons
+  const cacheDoc = await db.collection('ensCache').doc(addressFromUrl).get();
+  if (cacheDoc.exists) {
+    const cacheData = cacheDoc.data();
+    const cacheTimestamp = cacheData.timestamp.toDate();
+    const now = new Date();
+    const cacheAge = (now - cacheTimestamp) / 1000; // Cache age in seconds
+
+    // Return cached results if available and not expired
+    if (cacheAge < 86400) { // 24 hours
+      ethereumAddress = cacheData.address;
+      console.log(`Cache hit: ${addressFromUrl} resolved to ${ethereumAddress}`);
+    } else {
+      console.log(`Cache expired for ${addressFromUrl}`);
+    }
+  }
+
   // Attempt to resolve ENS or validate Ethereum address
-  try {
-    ethereumAddress = await getEthereumAddress(addressFromUrl);
-    console.log(`Ethereum address resolved or validated successfully: ${ethereumAddress}`);
-  } catch (error) {
-    console.error("Error resolving Ethereum address:", error);
-    return throwErrorResponse(response, 500, "Invalid ethereum address", "Could not resolve to a valid Ethereum address.");
+  if (!ethereumAddress) {
+    try {
+      ethereumAddress = await getEthereumAddress(addressFromUrl);
+      console.log(`Ethereum address resolved or validated successfully: ${ethereumAddress}`);
+    } catch (error) {
+      console.error("Error resolving Ethereum address:", error);
+      return throwErrorResponse(response, 500, "Invalid ethereum address", "Could not resolve to a valid Ethereum address.");
+    }
   }
 
   // Attempt to fetch ENS avatar if available
@@ -343,6 +372,14 @@ exports.avatar = onRequest({cors: true}, async (request, response) => {
     response.setHeader("Content-Disposition", `inline; filename="${filename}"`);
     response.setHeader("ETag", etag);
     response.send(iconBody);
+
+    // Store generated identicons in the cache
+    await db.collection('identiconCache').doc(ethereumAddress).set({
+      type: type,
+      iconBody: iconBody,
+      etag: etag,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
   } catch (error) {
     console.error("Error rendering avatar:", error);
     return throwErrorResponse(response, 500, "Error rendering", "An error occurred while rendering the avatar.");

@@ -14,6 +14,11 @@
 
 const blockiesCommon = require('./blockiesCommon');
 
+// Import Firestore to check cache before generating identicons
+const admin = require('firebase-admin');
+admin.initializeApp();
+const db = admin.firestore();
+
 function createColor() {
     //saturation is the whole color spectrum
     const h = Math.floor(blockiesCommon.rand() * 360);
@@ -69,12 +74,29 @@ function buildOptions(opts) {
     return newOpts;
 }
 
-function renderIdenticon(opts) {
+async function renderIdenticon(opts) {
     opts = buildOptions(opts);
     const imageData = createImageData(opts.size);
     const width = Math.sqrt(imageData.length);
 
     const size = opts.size * opts.scale;
+
+    // Check cache before generating identicons
+    const cacheDoc = await db.collection('identiconCache').doc(opts.seed).get();
+    if (cacheDoc.exists) {
+        const cacheData = cacheDoc.data();
+        const cacheTimestamp = cacheData.timestamp.toDate();
+        const now = new Date();
+        const cacheAge = (now - cacheTimestamp) / 1000; // Cache age in seconds
+
+        // Return cached results if available and not expired
+        if (cacheAge < 86400) { // 24 hours
+            console.log(`Cache hit: ${opts.seed} identicon retrieved from cache`);
+            return cacheData.iconBody;
+        } else {
+            console.log(`Cache expired for ${opts.seed}`);
+        }
+    }
 
     let svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + ' ' + size + '" style="shape-rendering: crispEdges">';
     svg += '<rect x="0" y="0" width="' + size + '" height="' + size + '" fill="' + opts.bgcolor + '"/>';
@@ -92,7 +114,17 @@ function renderIdenticon(opts) {
             svg += '<rect x="' + col * opts.scale + '" y="' + row * opts.scale + '" width="' + opts.scale + '" height="' + opts.scale + '" fill="' + fill + '"/>';
         }
     }
-    return svg + '</svg>';
+
+    const iconBody = svg + '</svg>';
+
+    // Store generated identicons in the cache
+    await db.collection('identiconCache').doc(opts.seed).set({
+        type: 'svg',
+        iconBody: iconBody,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return iconBody;
 }
 
 module.exports = renderIdenticon;
