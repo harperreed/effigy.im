@@ -157,7 +157,8 @@ async function crawlTokenUri(tokenUri) {
 	}
 }
 
-async function grabImageUriContract(type, address, tokenId, ownerAddress) {
+// Export the function so it can be tested
+exports.grabImageUriContract = async function grabImageUriContract(type, address, tokenId, ownerAddress) {
 	const provider = getProvider();
 
 	let abi;
