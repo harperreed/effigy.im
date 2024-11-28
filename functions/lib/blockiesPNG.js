@@ -56,6 +56,13 @@ function buildOptions(opts) {
     throw new Error('No seed provided');
   }
 
+  if (opts.size && (opts.size < 1 || !Number.isInteger(opts.size))) {
+    throw new Error('Size must be a positive integer');
+  }
+
+  if (opts.scale && (opts.scale < 1 || !Number.isInteger(opts.scale))) {
+    throw new Error('Scale must be a positive integer');
+  }
 
   blockiesCommon.randomizeSeed(opts.seed);
 

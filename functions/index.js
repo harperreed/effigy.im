@@ -25,7 +25,8 @@ const erc1155Abi = [
 ];
 
 
-function parseURL(url) {
+// Export the function so it can be tested
+exports.parseURL = function parseURL(url) {
   // Remove the initial part of the URL to get the relevant parts
   const cleanedUrl = url.replace("/a/", "");
   // Split the URL by '.' to separate different parts
@@ -36,19 +37,19 @@ function parseURL(url) {
   let addressFromUrl = "";
   let type = "svg"; // Default type
 
-  // Check if the URL ends with 'eth' to handle ENS domains
-  if (urlPartsLen > 2 && urlParts[urlPartsLen - 2] === "eth") {
+  // Check if the URL ends with 'eth' (case insensitive) to handle ENS domains
+  if (urlPartsLen > 2 && urlParts[urlPartsLen - 2].toLowerCase() === "eth") {
     // If the format is 'name.eth.svg' or similar
     addressFromUrl = urlParts.slice(0, urlPartsLen - 1).join(".");
-    type = urlParts[urlPartsLen - 1];
-  } else if (urlPartsLen > 1 && urlParts[urlPartsLen - 1] === "eth") {
+    type = urlParts[urlPartsLen - 1].toLowerCase();
+  } else if (urlPartsLen > 1 && urlParts[urlPartsLen - 1].toLowerCase() === "eth") {
     // If the format is 'name.eth'
     addressFromUrl = cleanedUrl;
   } else {
     // Handle other formats, assuming the first part is the address
     addressFromUrl = urlParts[0];
     if (urlParts[1]) {
-      type = urlParts[1]; // Set type if available
+      type = urlParts[1].toLowerCase(); // Set type if available, convert to lowercase
     }
   }
 
@@ -100,7 +101,8 @@ function getProvider() {
   }
 }
 
-async function getEthereumAddress(addressString) {
+// Export the function so it can be tested
+exports.getEthereumAddress = async function getEthereumAddress(addressString) {
   let address;
 
   // Check if the address string includes '.eth' to handle ENS names
@@ -200,7 +202,8 @@ async function grabImageUriContract(type, address, tokenId, ownerAddress) {
   }
 }
 
-async function getENSAvatar(addressString) {
+// Export the function so it can be tested
+exports.getENSAvatar = async function getENSAvatar(addressString) {
   try {
     // Initialize provider to interact with Ethereum blockchain
     const provider = getProvider();
@@ -215,14 +218,29 @@ async function getENSAvatar(addressString) {
     let avatarUrl;
 
     // Check if the avatar text indicates an EIP-155 asset
-    if (avatarText.includes("eip155:")) {
-      // Parse the asset ID from the avatar text
-      const assetId = new AssetId(avatarText);
-      // Attempt to retrieve the image URI associated with the token
-      const tokenImageUri = await grabImageUriContract(assetId.assetName.namespace, assetId.assetName.reference, assetId.tokenId, addressString);
-      // If a token image URI is found, use it as the avatar URL
-      if (tokenImageUri) {
-        avatarUrl = tokenImageUri;
+    if (avatarText && avatarText.includes("eip155:")) {
+      try {
+        // Parse the asset ID from the avatar text
+        const assetId = new AssetId(avatarText);
+        // Default to erc721 if not specified
+        const tokenType = (assetId.assetName.namespace || 'erc721').toLowerCase();
+        // Get contract address from reference
+        const contractAddress = assetId.assetName.reference;
+        // Get token ID
+        const tokenId = assetId.tokenId;
+        
+        console.log(`Processing EIP-155 avatar: type=${tokenType}, contract=${contractAddress}, tokenId=${tokenId}`);
+        
+        // Attempt to retrieve the image URI associated with the token
+        const tokenImageUri = await grabImageUriContract(tokenType, contractAddress, tokenId, addressString);
+        // If a token image URI is found, use it as the avatar URL
+        if (tokenImageUri) {
+          avatarUrl = tokenImageUri;
+          console.log(`Successfully resolved token image URI: ${avatarUrl}`);
+        }
+      } catch (error) {
+        console.error("Error processing EIP-155 avatar:", error);
+        console.error(error.stack);
       }
     } else {
       // If the avatar text does not indicate an EIP-155 asset, use it directly as the URL

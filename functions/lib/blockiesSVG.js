@@ -55,10 +55,20 @@ function createImageData(size) {
 
 
 function buildOptions(opts) {
+    if (!opts.seed) {
+        throw new Error('No seed provided');
+    }
+
+    if (opts.size && (opts.size < 1 || !Number.isInteger(opts.size))) {
+        throw new Error('Size must be a positive integer');
+    }
+
+    if (opts.scale && (opts.scale < 1 || !Number.isInteger(opts.scale))) {
+        throw new Error('Scale must be a positive integer');
+    }
+
     const newOpts = {};
-
-    newOpts.seed = opts.seed || Math.floor((Math.random() * Math.pow(10, 16))).toString(16);
-
+    newOpts.seed = opts.seed;
     blockiesCommon.randomizeSeed(newOpts.seed);
 
     newOpts.size = opts.size || 8;
