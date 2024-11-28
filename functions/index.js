@@ -37,19 +37,19 @@ exports.parseURL = function parseURL(url) {
   let addressFromUrl = "";
   let type = "svg"; // Default type
 
-  // Check if the URL ends with 'eth' to handle ENS domains
-  if (urlPartsLen > 2 && urlParts[urlPartsLen - 2] === "eth") {
+  // Check if the URL ends with 'eth' (case insensitive) to handle ENS domains
+  if (urlPartsLen > 2 && urlParts[urlPartsLen - 2].toLowerCase() === "eth") {
     // If the format is 'name.eth.svg' or similar
     addressFromUrl = urlParts.slice(0, urlPartsLen - 1).join(".");
-    type = urlParts[urlPartsLen - 1];
-  } else if (urlPartsLen > 1 && urlParts[urlPartsLen - 1] === "eth") {
+    type = urlParts[urlPartsLen - 1].toLowerCase();
+  } else if (urlPartsLen > 1 && urlParts[urlPartsLen - 1].toLowerCase() === "eth") {
     // If the format is 'name.eth'
     addressFromUrl = cleanedUrl;
   } else {
     // Handle other formats, assuming the first part is the address
     addressFromUrl = urlParts[0];
     if (urlParts[1]) {
-      type = urlParts[1]; // Set type if available
+      type = urlParts[1].toLowerCase(); // Set type if available, convert to lowercase
     }
   }
 
