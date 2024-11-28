@@ -293,123 +293,56 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
 	}
 };
 
-// exports.avatar = functions.https.onRequest(async (request, response) => {
 exports.avatar = onRequest({ cors: true }, async (request, response) => {
-	// Attempt to parse the URL to extract relevant parameters
-	let urlParams, ethereumAddress;
-	try {
-		urlParams = parseURL(request.url);
-		console.log(
-			`URL parameters parsed successfully: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`,
-		);
-	} catch (error) {
-		console.error("Error parsing URL:", error);
-		return throwErrorResponse(
-			response,
-			404,
-			"Invalid url format",
-			"The URL provided does not match expected formats.",
-		);
-	}
+  const { generateAvatar, setAvatarHeaders } = require("./lib/avatarHelpers");
+  const { CACHE_CONTROL, AVATAR_TYPES } = require("./lib/constants");
 
-	let type = urlParams.type; // Default type is 'svg', can be overridden based on URL
-	const addressFromUrl = urlParams.addressFromUrl; // Extracted Ethereum address or ENS name from URL
+  try {
+    // Parse URL and validate address
+    const urlParams = parseURL(request.url);
+    console.log(`URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`);
+    
+    const ethereumAddress = await getEthereumAddress(urlParams.addressFromUrl);
+    console.log(`Ethereum address resolved: ${ethereumAddress}`);
 
-	// Attempt to resolve ENS or validate Ethereum address
-	try {
-		ethereumAddress = await getEthereumAddress(addressFromUrl);
-		console.log(
-			`Ethereum address resolved or validated successfully: ${ethereumAddress}`,
-		);
-	} catch (error) {
-		console.error("Error resolving Ethereum address:", error);
-		return throwErrorResponse(
-			response,
-			500,
-			"Invalid ethereum address",
-			"Could not resolve to a valid Ethereum address.",
-		);
-	}
+    // Check for ENS avatar
+    const ensAvatar = await getENSAvatar(ethereumAddress);
+    if (ensAvatar) {
+      console.log(`Redirecting to ENS avatar: ${ensAvatar}`);
+      response.set("Cache-Control", CACHE_CONTROL.LONG);
+      response.redirect(ensAvatar);
+      return;
+    }
 
-	// Attempt to fetch ENS avatar if available
-	const ensAvatar = await getENSAvatar(ethereumAddress);
-	console.log(
-		ensAvatar
-			? `ENS avatar found: ${ensAvatar}`
-			: "No ENS avatar found, proceeding with blockies generation.",
-	);
+    // Generate avatar if no ENS avatar found
+    const type = urlParams.type;
+    const addressSeed = ethereumAddress.toLowerCase();
+    
+    const avatarData = generateAvatar(type, addressSeed);
+    
+    // Handle ETag caching
+    if (request.headers["if-none-match"] === avatarData.etag) {
+      console.log("ETag matches - sending 304 Not Modified");
+      response.status(304).end();
+      return;
+    }
 
-	// If an ENS avatar is found, override the type to 'ens'
-	if (ensAvatar) {
-		type = "ens";
-	}
+    // Set headers and send response
+    setAvatarHeaders(response, avatarData);
+    response.set("Cache-Control", CACHE_CONTROL.LONG);
+    response.send(avatarData.body);
 
-	const addressSeed = ethereumAddress.toLowerCase(); // Seed for generating blockies
-	let filename, contentType, iconBody, etag;
-
-	// Render avatar based on type or redirect if ENS avatar is found
-	try {
-		switch (type) {
-			case "svg":
-				iconBody = renderSVG({
-					seed: addressSeed,
-				});
-				filename = `${ethereumAddress}.svg`;
-				contentType = "image/svg+xml";
-				etag = require("crypto")
-					.createHash("md5")
-					.update(iconBody)
-					.digest("hex");
-				console.log(`SVG avatar generated for ${ethereumAddress}`);
-				break;
-			case "png":
-				iconBody = renderPNG({
-					seed: addressSeed,
-				});
-				filename = `${ethereumAddress}.png`;
-				contentType = "image/png";
-				etag = require("crypto")
-					.createHash("md5")
-					.update(iconBody)
-					.digest("hex");
-				console.log(`PNG avatar generated for ${ethereumAddress}`);
-				break;
-			case "ens":
-				// Redirect to ENS avatar URL if available
-				console.log(`Redirecting to ENS avatar URL: ${ensAvatar}`);
-				response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
-				response.redirect(ensAvatar);
-				return;
-			default:
-				console.error(`Invalid type: ${type}`);
-				return throwErrorResponse(
-					response,
-					500,
-					"invalid type",
-					`The requested type '${type}' is not supported.`,
-				);
-		}
-
-		// Check if client's ETag matches the current ETag
-		if (request.headers["if-none-match"] === etag) {
-			console.log("ETag matches - sending 304 Not Modified");
-			response.status(304).end();
-			return;
-		}
-
-		// Configure response headers and send the generated avatar
-		response.setHeader("Content-Type", contentType);
-		response.set("Cache-Control", "public, max-age=86400, s-maxage=86400");
-		response.setHeader("Content-Disposition", `inline; filename="${filename}"`);
-		response.setHeader("ETag", etag);
-		response.send(iconBody);
-	} catch (error) {
-		console.error("Error rendering avatar:", error);
-		return throwErrorResponse(
-			response,
-			500,
-			"Error rendering",
-			"An error occurred while rendering the avatar.",
-		);
-	}
+  } catch (error) {
+    console.error("Error handling avatar request:", error);
+    
+    const statusCode = error.message.includes("Invalid url format") ? 404 : 500;
+    const errorCode = error.message.includes("Invalid url format") ? "invalid_url" : "server_error";
+    
+    throwErrorResponse(
+      response,
+      statusCode,
+      errorCode,
+      error.message || "An error occurred while processing the avatar request"
+    );
+  }
 });
