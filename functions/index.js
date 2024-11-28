@@ -302,7 +302,7 @@ exports.avatar = onRequest({ cors: true }, async (request, response) => {
     const urlParams = exports.parseURL(request.url);
     console.log(`URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`);
     
-    const ethereumAddress = await getEthereumAddress(urlParams.addressFromUrl);
+    const ethereumAddress = await exports.getEthereumAddress(urlParams.addressFromUrl);
     console.log(`Ethereum address resolved: ${ethereumAddress}`);
 
     // Check for ENS avatar
