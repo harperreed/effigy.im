@@ -202,7 +202,8 @@ async function grabImageUriContract(type, address, tokenId, ownerAddress) {
   }
 }
 
-async function getENSAvatar(addressString) {
+// Export the function so it can be tested
+exports.getENSAvatar = async function getENSAvatar(addressString) {
   try {
     // Initialize provider to interact with Ethereum blockchain
     const provider = getProvider();

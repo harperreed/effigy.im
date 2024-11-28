@@ -1,5 +1,5 @@
 const { AssetId } = require("caip");
-const { getENSAvatar } = require('../index');
+const { getENSAvatar } = require('../index.js');
 
 // Mock the provider and other dependencies
 jest.mock('@ethersproject/providers', () => ({
