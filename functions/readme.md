@@ -1,5 +1,3 @@
-
-
 This repository contains an API for generating and serving Ethereum "blockie" identicons. The identicons can be generated as SVG or PNG images. The API also supports fetching ENS (Ethereum Name Service) avatars if available for a given Ethereum address. 🌈
 
 ## Features ✨
@@ -9,6 +7,7 @@ This repository contains an API for generating and serving Ethereum "blockie" id
 - Redirect to ENS avatar URL if available
 - Customizable identicon colors and styles
 - Supports Ethereum addresses and ENS names as input
+- Rate limiting to prevent abuse
 
 ## API Endpoints 🚀
 
@@ -26,6 +25,14 @@ Where `:address` can be an Ethereum address or an ENS name. The identicon type (
 ```
 
 If an ENS avatar is available for the provided Ethereum address or ENS name, the API will redirect to the avatar URL.
+
+## Rate Limiting ⏳
+
+To prevent abuse, the API implements rate limiting using `firebase-functions-rate-limiter`. The rate limits are as follows:
+
+- Maximum of 100 requests per minute per IP address
+
+Rate limiting headers are included in the responses to indicate the current usage and limits.
 
 ## Technologies Used 🛠️
 
