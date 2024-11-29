@@ -28,12 +28,18 @@ const { getEthereumAddress } = proxyquire('../index', {
 
 describe("getEthereumAddress", () => {
   beforeEach(async () => {
-    // Clear mocks and reset Firestore
+    // Clear mocks
     jest.clearAllMocks();
-    mockfirestore.reset();
+    
+    // Clear Firestore data and enable auto-flush
+    await mockfirestore.collection('addresses').get().then(snapshot => {
+      snapshot.forEach(doc => {
+        doc.ref.delete();
+      });
+    });
     mockfirestore.autoFlush();
     
-    // Initialize test data
+    // Initialize fresh test data
     await initializeMockData();
   });
 
