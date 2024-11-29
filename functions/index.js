@@ -33,6 +33,15 @@ const axios = require("axios").default;
 const renderSVG = require("./lib/blockiesSVG");
 const renderPNG = require("./lib/blockiesPNG");
 
+const { RateLimiter } = require("firebase-functions-rate-limiter");
+
+const rateLimiter = new RateLimiter({
+    name: "avatarRateLimiter",
+    maxCalls: 100,
+    periodSeconds: 60,
+    type: RateLimiter.TYPE_IP,
+});
+
 /* Davatars is great */
 const erc721Abi = [
     "function ownerOf(uint256 tokenId) view returns (address)",
@@ -563,6 +572,8 @@ exports.avatar = onRequest({ cors: true }, async (request, response) => {
     const { CACHE_CONTROL, AVATAR_TYPES } = require("./lib/constants");
 
     try {
+        await rateLimiter.rejectOnQuotaExceededOrRecordUsage(request);
+
         // Parse URL and validate address
         const urlParams = exports.parseURL(request.url);
         console.log(
@@ -599,6 +610,8 @@ exports.avatar = onRequest({ cors: true }, async (request, response) => {
         // Set headers and send response
         setAvatarHeaders(response, avatarData);
         response.set("Cache-Control", CACHE_CONTROL.LONG);
+        response.set("X-RateLimit-Limit", rateLimiter.maxCalls);
+        response.set("X-RateLimit-Remaining", await rateLimiter.getRemaining(request));
         response.send(avatarData.body);
     } catch (error) {
         console.error("Error handling avatar request:", error);
