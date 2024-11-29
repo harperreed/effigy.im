@@ -101,14 +101,23 @@ function throwErrorResponse(response, statusCode, error, message) {
     );
 }
 
+// Allow injection of provider for testing
+let _provider = null;
+exports.setProvider = (provider) => {
+    _provider = provider;
+};
+
 async function getProvider() {
+    // If provider is injected (for testing), return it
+    if (_provider) {
+        return _provider;
+    }
+
     // Fetch the Ethereum network configuration from Firebase functions configuration
-    // const network = functions.config().ethereum.network;
     const network = process.env.ETHEREUM_NETWORK;
     console.log(network);
 
     // Define provider options, using ApiKeyCredential for Alchemy
-    // const alchemyApiKey  = functions.config().alchemy.key;
     const alchemyApiKey = process.env.ALCHEMY_KEY;
 
     try {
@@ -126,7 +135,7 @@ async function getProvider() {
             return cloudflareProvider;
         } catch (error) {
             console.error("Failed to initialize both Alchemy and Cloudflare providers:", error);
-            return undefined;
+            throw new Error('Failed to initialize any provider');
         }
     }
 }

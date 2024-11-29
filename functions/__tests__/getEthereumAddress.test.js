@@ -17,7 +17,13 @@ const mockProvider = {
     }
     throw new Error("ENS name not found");
   }),
-  getBlockNumber: jest.fn().mockResolvedValue(1234567)
+  getBlockNumber: jest.fn().mockResolvedValue(1234567),
+  lookupAddress: jest.fn().mockImplementation(async (address) => {
+    if (address.toLowerCase() === "0xd8da6bf26964af9d7eed9e03e53415d37aa96045") {
+      return "vitalik.eth";
+    }
+    return null;
+  })
 };
 
 // Mock the provider
@@ -38,12 +44,11 @@ jest.mock("@ethersproject/providers", () => ({
 
 // Get the functions we want to test
 const functions = proxyquire('../index', {
-  'firebase-admin': mocksdk,
-  '@ethersproject/providers': {
-    AlchemyProvider: jest.fn().mockImplementation(() => mockProvider),
-    CloudflareProvider: jest.fn().mockImplementation(() => mockProvider)
-  }
+  'firebase-admin': mocksdk
 });
+
+// Inject our mock provider
+functions.setProvider(mockProvider);
 
 // Inject our mock firestore
 functions.setFirestore(mockfirestore);
