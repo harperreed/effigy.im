@@ -90,7 +90,7 @@ function throwErrorResponse(response, statusCode, error, message) {
     );
 }
 
-function getProvider() {
+async function getProvider() {
     // Fetch the Ethereum network configuration from Firebase functions configuration
     // const network = functions.config().ethereum.network;
     const network = process.env.ETHEREUM_NETWORK;
@@ -103,6 +103,7 @@ function getProvider() {
     try {
         // Try Alchemy provider first
         const alchemyProvider = new AlchemyProvider(network, alchemyApiKey);
+        await alchemyProvider.getBlockNumber(); // Test provider is working
         console.log("Alchemy provider initialized successfully.");
         return alchemyProvider;
     } catch (error) {
@@ -126,7 +127,7 @@ async function lookupENS(addressString) {
             throw new Error('Address string is required');
         }
 
-        const provider = getProvider();
+        const provider = await getProvider();
         if (!provider) {
             console.error('Failed to get Ethereum provider');
             throw new Error('Provider initialization failed');
@@ -298,7 +299,7 @@ exports.grabImageUriContract = async function grabImageUriContract(
     tokenId,
     ownerAddress,
 ) {
-    const provider = getProvider();
+    const provider = await getProvider();
 
     let abi;
     let tokenUri;
@@ -442,7 +443,7 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
         }
 
         // Initialize provider to interact with Ethereum blockchain
-        const provider = getProvider();
+        const provider = await getProvider();
         // Lookup the ENS name corresponding to the provided Ethereum address
         const ensName = await provider.lookupAddress(addressString);
         // Get a resolver for the ENS name to interact with its records
