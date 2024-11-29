@@ -3,6 +3,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const ethers = require("ethers");
 const { defineString } = require("firebase-functions/params");
 const { utils } = require("ethers");
+const rateLimit = require("express-rate-limit");
 
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -558,7 +559,19 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
     }
 };
 
-exports.avatar = onRequest({ cors: true }, async (request, response) => {
+const avatarRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    handler: (req, res) => {
+        res.status(429).json({
+            error: "Too many requests",
+            message: "You have exceeded the rate limit for this endpoint. Please try again later."
+        });
+    },
+    headers: true, // Enable rate limit headers in responses
+});
+
+exports.avatar = onRequest({ cors: true }, avatarRateLimiter, async (request, response) => {
     const { generateAvatar, setAvatarHeaders } = require("./lib/avatarHelpers");
     const { CACHE_CONTROL, AVATAR_TYPES } = require("./lib/constants");
 

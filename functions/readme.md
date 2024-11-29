@@ -1,5 +1,3 @@
-
-
 This repository contains an API for generating and serving Ethereum "blockie" identicons. The identicons can be generated as SVG or PNG images. The API also supports fetching ENS (Ethereum Name Service) avatars if available for a given Ethereum address. 🌈
 
 ## Features ✨
@@ -26,6 +24,14 @@ Where `:address` can be an Ethereum address or an ENS name. The identicon type (
 ```
 
 If an ENS avatar is available for the provided Ethereum address or ENS name, the API will redirect to the avatar URL.
+
+## Rate Limits ⏳
+
+To prevent abuse, the API enforces rate limits on requests. The current rate limits are as follows:
+
+- Maximum of 100 requests per 15 minutes per IP address.
+
+If you exceed the rate limit, you will receive a `429 Too Many Requests` response. The response will include rate limiting headers to inform you of your current rate limit status.
 
 ## Technologies Used 🛠️
 
