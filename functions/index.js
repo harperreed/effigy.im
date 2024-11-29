@@ -4,6 +4,12 @@ const ethers = require("ethers");
 const { defineString } = require("firebase-functions/params");
 const { utils } = require("ethers");
 
+const { initializeApp } = require("firebase-admin/app");
+const { getFirestore } = require("firebase-admin/firestore");
+
+const app = initializeApp();
+const db = getFirestore(app);
+
 const {
     AlchemyProvider,
     CloudflareProvider,
@@ -94,17 +100,130 @@ function getProvider() {
     // const alchemyApiKey  = functions.config().alchemy.key;
     const alchemyApiKey = process.env.ALCHEMY_KEY;
 
-    // Initialize the Ethereum provider using Alchemy
-    // const provider = new AlchemyProvider(network, alchemyApiKey);
-    const provider = new CloudflareProvider();
+    try {
+        // Try Alchemy provider first
+        const alchemyProvider = new AlchemyProvider(network, alchemyApiKey);
+        console.log("Alchemy provider initialized successfully.");
+        return alchemyProvider;
+    } catch (error) {
+        console.log("Failed to initialize Alchemy provider, falling back to Cloudflare:", error);
+        // Fall back to Cloudflare provider
+        try {
+            const cloudflareProvider = new CloudflareProvider();
+            console.log("Cloudflare provider initialized successfully."); 
+            return cloudflareProvider;
+        } catch (error) {
+            console.error("Failed to initialize both Alchemy and Cloudflare providers:", error);
+            return undefined;
+        }
+    }
+}
 
-    // Check and log the initialization status of the provider
-    if (provider) {
-        console.log("Ethereum provider initialized successfully.");
-        return provider;
-    } else {
-        console.error("Failed to initialize the Ethereum provider.");
-        return undefined;
+async function lookupENS(addressString) {
+    try {
+        if (!addressString) {
+            console.error('No address string provided to lookupENS');
+            throw new Error('Address string is required');
+        }
+
+        const provider = getProvider();
+        if (!provider) {
+            console.error('Failed to get Ethereum provider');
+            throw new Error('Provider initialization failed');
+        }
+
+        console.log(`Looking up ENS name: ${addressString}`);
+
+        // Normalize address string
+        const normalizedAddress = addressString.toLowerCase().trim();
+
+        // Resolve ENS name to Ethereum address
+        const address = await provider.resolveName(normalizedAddress);
+
+        if (!address) {
+            console.warn(`Could not resolve ENS name: ${normalizedAddress}`);
+            return null;
+        }
+
+        console.log(`Successfully resolved ENS name ${normalizedAddress} to address ${address}`);
+        return address;
+
+    } catch (error) {
+        console.error('Error in lookupENS:', error);
+        throw new Error(`ENS lookup failed: ${error.message}`);
+    }
+}
+
+async function grabCachedAddress(addressString) {
+    if (!addressString) {
+        console.log('No address string provided to grabCachedAddress');
+        return null;
+    }
+
+    try {
+        // Normalize address string
+        const normalizedAddress = addressString.toLowerCase().trim();
+        console.log(`Looking up cached address for: ${normalizedAddress}`);
+
+        const docRef = await db
+            .collection("addresses")
+            .doc(normalizedAddress)
+            .get();
+
+        if (!docRef.exists) {
+            console.log(`No cached address found for: ${normalizedAddress}`);
+            return null;
+        }
+
+        const data = docRef.data();
+        if (!data || !data.address) {
+            console.warn(`Invalid data format in cache for address: ${normalizedAddress}`);
+            return null;
+        }
+
+        // Check if cache is stale (older than 24 hours)
+        const lastChecked = data.lastChecked?.toDate();
+        if (lastChecked && Date.now() - lastChecked > 24 * 60 * 60 * 1000) {
+            console.log(`Cached address is stale for: ${normalizedAddress}`);
+            return null;
+        }
+
+        console.log(`Successfully retrieved cached address: ${data.address}`);
+        return data.address;
+
+    } catch (error) {
+        console.error('Error retrieving cached address:', error);
+        return null;
+    }
+}
+
+async function cacheAddress(addressString, ethereumAddress) {
+    try {
+        if (!addressString || !ethereumAddress) {
+            console.error('Missing required parameters for cacheAddress');
+            throw new Error('Missing required parameters: addressString and ethereumAddress are required');
+        }
+
+        // Normalize input addresses
+        const normalizedAddressString = addressString.toLowerCase().trim();
+        const normalizedEthereumAddress = ethereumAddress.toLowerCase().trim();
+
+        console.log(`Caching address mapping: ${normalizedAddressString} -> ${normalizedEthereumAddress}`);
+
+        const timestamp = new Date();
+        await db.collection("addresses").doc(normalizedAddressString).set({
+            address: normalizedEthereumAddress,
+            originalAddressString: addressString,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            lastChecked: timestamp
+        }, { merge: true });
+
+        console.log(`Successfully cached address for ${normalizedAddressString}`);
+
+    } catch (error) {
+        console.error('Error caching address:', error);
+        throw new Error(`Failed to cache address: ${error.message}`);
     }
 }
 
@@ -112,14 +231,20 @@ function getProvider() {
 exports.getEthereumAddress = async function getEthereumAddress(addressString) {
     let address;
 
+    // throw new Error('Address not found in database');
+    //
+    const cachedAddress = await grabCachedAddress(addressString);
+    if (cachedAddress) {
+        console.log(`Found cached address: ${cachedAddress}`);
+        return cachedAddress;
+    } else {
+        console.log(`Address not found in database`);
+    }
+
     // Check if the address string includes '.eth' to handle ENS names
     if (addressString.includes(".eth")) {
         // Get Ethereum provider instance
-        const provider = getProvider();
-        // Resolve ENS name to Ethereum address
-        address = await provider.resolveName(addressString);
-        // Log the resolved address for debugging purposes
-        console.log(`Resolved ENS name ${addressString} to address ${address}`);
+        address = await lookupENS(addressString);
     } else {
         // If not an ENS name, use the address string as is
         address = addressString;
@@ -127,6 +252,9 @@ exports.getEthereumAddress = async function getEthereumAddress(addressString) {
 
     // Validate and normalize the Ethereum address using ethers.js utility
     const ethereumAddress = ethers.getAddress(address);
+
+    // Cache the resolved Ethereum address for future lookups
+    await cacheAddress(addressString, ethereumAddress);
 
     // Log the normalized Ethereum address for debugging purposes
     console.log(`Normalized Ethereum address: ${ethereumAddress}`);
@@ -218,9 +346,101 @@ exports.grabImageUriContract = async function grabImageUriContract(
     }
 };
 
+async function cacheEnsAvatar(address, avatarUrl) {
+    try {
+        if (!address || !avatarUrl) {
+            console.error('Missing required parameters for cacheEnsAvatar');
+            throw new Error('Both address and avatarUrl are required');
+        }
+
+        // Normalize and validate address
+        const normalizedAddress = address.toLowerCase().trim();
+        if (!normalizedAddress.match(/^0x[a-f0-9]{40}$/i)) {
+            console.error('Invalid Ethereum address format:', address);
+            throw new Error('Invalid Ethereum address format');
+        }
+
+        console.log(`Caching ENS avatar for address: ${normalizedAddress}`);
+        console.log(`Avatar URL: ${avatarUrl}`);
+
+        const timestamp = new Date();
+        const docData = {
+            avatarUrl: avatarUrl,
+            originalAddress: address,
+            createdAt: timestamp,
+            updatedAt: timestamp,
+            lastChecked: timestamp
+        };
+
+        await db.collection("ens_avatars")
+            .doc(normalizedAddress)
+            .set(docData, { merge: true });
+
+        console.log(`Successfully cached ENS avatar for ${normalizedAddress}`);
+
+    } catch (error) {
+        console.error('Error caching ENS avatar:', error);
+        throw new Error(`Failed to cache ENS avatar: ${error.message}`);
+    }
+}
+
+async function grabCachedEnsAvatar(address) {
+    if (!address) {
+        console.warn("No address provided to grabCachedEnsAvatar");
+        return null;
+    }
+
+    try {
+        // Normalize address to lowercase
+        const normalizedAddress = address.toLowerCase().trim();
+
+        const docRef = await db
+            .collection("ens_avatars")
+            .doc(normalizedAddress)
+            .get();
+
+        if (!docRef.exists) {
+            return null;
+        }
+
+        const data = docRef.data();
+
+        // Check if data exists and has avatarUrl property
+        if (!data || typeof data.avatarUrl === "undefined") {
+            console.warn(
+                `Invalid data format for ENS avatar cache: ${normalizedAddress}`,
+            );
+            return null;
+        }
+
+        // Check if cache is stale (older than 24 hours)
+        const updatedAt = data.updatedAt?.toDate();
+        if (updatedAt && Date.now() - updatedAt > 24 * 60 * 60 * 1000) {
+            console.log(
+                `Cached ENS avatar is stale for address: ${normalizedAddress}`,
+            );
+            return null;
+        }
+
+        return data.avatarUrl;
+    } catch (error) {
+        console.error("Error retrieving cached ENS avatar:", error);
+        return null;
+    }
+}
+
 // Export the function so it can be tested
 exports.getENSAvatar = async function getENSAvatar(addressString) {
     try {
+        const cachedAvatar = await grabCachedEnsAvatar(addressString);
+
+        if (cachedAvatar) {
+            console.log(`Found cached ENS avatar: ${cachedAvatar}`);
+            return cachedAvatar;
+        } else {
+            console.log(`ENS avatar not found in database`);
+        }
+
         // Initialize provider to interact with Ethereum blockchain
         const provider = getProvider();
         // Lookup the ENS name corresponding to the provided Ethereum address
@@ -303,6 +523,11 @@ exports.getENSAvatar = async function getENSAvatar(addressString) {
         // Log the resolved ENS avatar URL
         console.log("Resolved ENS avatar:", avatarUrl);
         // Return the web-accessible avatar URL
+        //
+
+        // Cache the resolved ENS avatar URL for future lookups
+        await cacheEnsAvatar(addressString, avatarUrl);
+
         return avatarUrl;
     } catch (error) {
         // Log any errors encountered during the process
