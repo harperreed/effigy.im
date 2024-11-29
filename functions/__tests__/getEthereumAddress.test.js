@@ -5,6 +5,21 @@ const {
   initializeMockData 
 } = require('./testSetup');
 
+// Mock provider with test implementation
+const mockProvider = {
+  resolveName: jest.fn().mockImplementation(async (ensName) => {
+    const normalizedName = ensName.toLowerCase();
+    if (normalizedName === "vitalik.eth") {
+      return "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+    }
+    if (normalizedName === "nick.eth") {
+      return "0xb8c2C29ee19D8307cb7255e1Cd9CbDE883A267d5";
+    }
+    throw new Error("ENS name not found");
+  }),
+  getBlockNumber: jest.fn().mockResolvedValue(1234567)
+};
+
 // Mock the provider
 jest.mock("@ethersproject/providers", () => ({
   AlchemyProvider: jest.fn().mockImplementation(() => ({
@@ -23,7 +38,11 @@ jest.mock("@ethersproject/providers", () => ({
 
 // Get the functions we want to test
 const functions = proxyquire('../index', {
-  'firebase-admin': mocksdk
+  'firebase-admin': mocksdk,
+  '@ethersproject/providers': {
+    AlchemyProvider: jest.fn().mockImplementation(() => mockProvider),
+    CloudflareProvider: jest.fn().mockImplementation(() => mockProvider)
+  }
 });
 
 // Inject our mock firestore
