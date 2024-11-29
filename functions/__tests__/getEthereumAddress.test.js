@@ -21,10 +21,15 @@ jest.mock("@ethersproject/providers", () => ({
   })),
 }));
 
-// Use proxyquire to inject our mocked firebase-admin
-const { getEthereumAddress } = proxyquire('../index', {
+// Get the functions we want to test
+const functions = proxyquire('../index', {
   'firebase-admin': mocksdk
 });
+
+// Inject our mock firestore
+functions.setFirestore(mockfirestore);
+
+const { getEthereumAddress } = functions;
 
 // Increase timeout for all tests in this describe block
 describe("getEthereumAddress", () => {

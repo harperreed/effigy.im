@@ -8,7 +8,18 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
 
 const app = initializeApp();
-const db = getFirestore(app);
+let db;
+try {
+    db = getFirestore(app);
+} catch (error) {
+    console.warn('Failed to initialize default Firestore:', error);
+    db = null;
+}
+
+// Allow injection of database for testing
+exports.setFirestore = (firestore) => {
+    db = firestore;
+};
 
 const {
     AlchemyProvider,
