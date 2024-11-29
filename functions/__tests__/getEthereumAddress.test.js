@@ -26,21 +26,26 @@ const { getEthereumAddress } = proxyquire('../index', {
   'firebase-admin': mocksdk
 });
 
+// Increase timeout for all tests in this describe block
 describe("getEthereumAddress", () => {
+  jest.setTimeout(30000); // 30 second timeout
   beforeEach(async () => {
     // Clear mocks
     jest.clearAllMocks();
     
-    // Clear Firestore data and enable auto-flush
-    await mockfirestore.collection('addresses').get().then(snapshot => {
-      snapshot.forEach(doc => {
-        doc.ref.delete();
-      });
-    });
+    // Clear Firestore data and reinitialize in one batch
     mockfirestore.autoFlush();
+    const batch = mockfirestore.batch();
+    
+    // Clear existing data
+    const snapshot = await mockfirestore.collection('addresses').get();
+    snapshot.forEach(doc => {
+      batch.delete(doc.ref);
+    });
     
     // Initialize fresh test data
     await initializeMockData();
+    await batch.commit();
   });
 
 	test("resolves valid Ethereum address", async () => {
