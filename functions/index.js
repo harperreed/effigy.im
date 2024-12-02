@@ -1,8 +1,6 @@
 const functions = require("firebase-functions");
 const { onRequest } = require("firebase-functions/v2/https");
 const ethers = require("ethers");
-const { defineString } = require("firebase-functions/params");
-const { utils } = require("ethers");
 
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
@@ -197,7 +195,12 @@ async function cacheAddress(addressString, ethereumAddress) {
 
 // Utility function to validate Ethereum addresses
 function isValidEthereumAddress(address) {
-    return ethers.utils.isAddress(address);
+    try {
+        ethers.utils.getAddress(address);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 // Utility function to validate ENS names
