@@ -16,3 +16,8 @@ exports.AVATAR_TYPES = {
     SVG: "svg",
     PNG: "png",
 };
+
+exports.FIREBASE_STORAGE = {
+    AVATAR_PATH: "avatars/",
+    BUCKET_NAME: "your-firebase-bucket-name",
+};
