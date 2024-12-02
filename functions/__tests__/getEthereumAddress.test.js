@@ -113,4 +113,18 @@ describe("getEthereumAddress", () => {
 		const result = await getEthereumAddress("VITALIK.eth");
 		expect(result).toBe("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
 	});
+
+	test("validates Ethereum address format", async () => {
+		const validAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+		const invalidAddress = "0xinvalid";
+		expect(() => functions.isValidEthereumAddress(validAddress)).not.toThrow();
+		expect(() => functions.isValidEthereumAddress(invalidAddress)).toThrow();
+	});
+
+	test("validates ENS name format", async () => {
+		const validENS = "vitalik.eth";
+		const invalidENS = "invalid.eth.";
+		expect(() => functions.isValidENSName(validENS)).not.toThrow();
+		expect(() => functions.isValidENSName(invalidENS)).toThrow();
+	});
 });

@@ -195,6 +195,17 @@ async function cacheAddress(addressString, ethereumAddress) {
     }
 }
 
+// Utility function to validate Ethereum addresses
+function isValidEthereumAddress(address) {
+    return ethers.utils.isAddress(address);
+}
+
+// Utility function to validate ENS names
+function isValidENSName(name) {
+    const ensRegex = /^[a-zA-Z0-9-]+\.eth$/;
+    return ensRegex.test(name);
+}
+
 // Export the function so it can be tested
 exports.getEthereumAddress = async function getEthereumAddress(addressString) {
     let address;
@@ -249,6 +260,14 @@ exports.avatar = onRequest(
             console.log(
                 `URL parameters parsed: Address - ${urlParams.addressFromUrl}, Type - ${urlParams.type}`,
             );
+
+            // Early validation of address format
+            if (
+                !isValidEthereumAddress(urlParams.addressFromUrl) &&
+                !isValidENSName(urlParams.addressFromUrl)
+            ) {
+                throw new Error("Invalid address format");
+            }
 
             const ethereumAddress = await exports.getEthereumAddress(
                 urlParams.addressFromUrl,
