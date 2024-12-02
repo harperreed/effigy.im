@@ -1,19 +1,18 @@
-// Cache control headers
+const long_days = 30;
+const short_hours = 7;
+
 exports.CACHE_CONTROL = {
-  LONG: "public, max-age=86400, s-maxage=86400",
-  SHORT: "public, max-age=1800, s-maxage=3600"
+    LONG: `public, max-age=${86400 * long_days}, s-maxage=${86400 * long_days}`, 
+    SHORT: `public, max-age=${3600 * short_hours}, s-maxage=${3600 * short_hours}`,
 };
 
-// Content types
 exports.CONTENT_TYPES = {
-  SVG: "image/svg+xml",
-  PNG: "image/png",
-  JSON: "application/json"
+    SVG: "image/svg+xml",
+    PNG: "image/png",
+    JSON: "application/json",
 };
 
-// Avatar types
 exports.AVATAR_TYPES = {
-  SVG: "svg",
-  PNG: "png",
-  ENS: "ens"
+    SVG: "svg",
+    PNG: "png",
 };

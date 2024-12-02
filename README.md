@@ -2,13 +2,12 @@
 
 [![GitHub](https://img.shields.io/github/license/harperreed/effigy.im?style=flat-square)](https://github.com/harperreed/effigy.im/blob/main/LICENSE)
 
-This repository contains the source code and documentation for [effigy.im](https://effigy.im), a service that generates Ethereum "blockie" identicons for Ethereum addresses and ENS names. 🌈
+This repository contains the source code and documentation for [effigy.im](https://effigy.im), a service that generates Ethereum "blockie" identicons for Ethereum addresses. 🌈
 
 ## Features ✨
 
 - Generate identicons as SVG or PNG images 🖼️
-- Support for Ethereum addresses and ENS names 🔖
-- Redirect to ENS avatar if available 🔀
+- Support for Ethereum addresses 🔖
 - Customizable identicon styles and colors 🎨
 
 ## Usage 🚀
@@ -16,25 +15,21 @@ This repository contains the source code and documentation for [effigy.im](https
 To generate an identicon, simply use the following URL format:
 
 ```
-https://effigy.im/a/[ethereumAddress|ensName].[png|svg]
+https://effigy.im/a/[ethereumAddress].[png|svg]
 ```
 
-Replace `[ethereumAddress|ensName]` with the desired Ethereum address or ENS name, and specify the desired image format (`png` or `svg`).
+Replace `[ethereumAddress]` with the desired Ethereum address, and specify the desired image format (`png` or `svg`).
 
 To use the service in an image tag, use the following format:
 
 ```html
-<img src="https://effigy.im/a/[ethereumAddress|ensName].[png|svg]">
+<img src="https://effigy.im/a/[ethereumAddress].[png|svg]">
 ```
 
 ### Examples
 
 - Ethereum address (PNG): `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.png`
 - Ethereum address (SVG): `https://effigy.im/a/0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045.svg`
-- ENS name (PNG): `https://effigy.im/a/vitalik.eth.png`
-- ENS name (SVG): `https://effigy.im/a/vitalik.eth.svg`
-
-If an ENS avatar is available for the provided Ethereum address or ENS name, effigy.im will redirect to the avatar URL. 🌠
 
 ## Repository Structure 📂
 
