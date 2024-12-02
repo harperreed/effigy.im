@@ -1,28 +1,36 @@
 {
-  "hosting": {
-    "public": "site/public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/a/**",
-        "function": "avatar"
-      },
-      {
-        "source": "/token/**",
-        "function": "displayToken"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
-   "functions": {
-    "source": "functions",
-    "runtime": "nodejs18" // or nodejs14, nodejs16 or nodejs20
-  }
+    "hosting": {
+        "public": "site/public",
+        "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+        "rewrites": [
+            {
+                "source": "/a/**",
+                "function": "avatar"
+            },
+            {
+                "source": "/token/**",
+                "function": "displayToken"
+            },
+            {
+                "source": "**",
+                "destination": "/index.html"
+            }
+        ],
+        "headers": [
+            {
+                "source": "/a/**",
+                "headers": [
+                    {
+                        "key": "Cache-Control",
+                        "value": "public, max-age=604800, s-maxage=604800"
+                    }
+                ]
+            }
+        ]
+    },
+    "functions": {
+        "source": "functions",
+        "runtime": "nodejs18",
+        "memory": "128MB"
+    }
 }
