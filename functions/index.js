@@ -4,6 +4,7 @@ const ethers = require("ethers");
 
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getStorage } = require("firebase-admin/storage");
 
 const app = initializeApp();
 let db;
@@ -243,6 +244,34 @@ exports.getEthereumAddress = async function getEthereumAddress(addressString) {
     return ethereumAddress;
 };
 
+async function getOrGenerateAvatar(address, type) {
+    const cacheKey = `${address}-${type}`;
+    const bucket = getStorage().bucket();
+    const file = bucket.file(`avatars/${cacheKey}`);
+
+    try {
+        const [exists] = await file.exists();
+        if (exists) {
+            console.log(`Cache hit for ${cacheKey}`);
+            const [contents] = await file.download();
+            return contents;
+        } else {
+            console.log(`Cache miss for ${cacheKey}`);
+            const { generateAvatar } = require("./lib/avatarHelpers");
+            const avatarData = generateAvatar(type, address);
+            await file.save(avatarData.body, {
+                metadata: {
+                    contentType: avatarData.contentType,
+                },
+            });
+            return avatarData.body;
+        }
+    } catch (error) {
+        console.error("Error in getOrGenerateAvatar:", error);
+        throw new Error("Failed to get or generate avatar");
+    }
+}
+
 exports.avatar = onRequest(
     {
         cors: true,
@@ -277,23 +306,25 @@ exports.avatar = onRequest(
             );
             console.log(`Ethereum address resolved: ${ethereumAddress}`);
 
-            // Generate avatar
+            // Generate or retrieve avatar
             const type = urlParams.type;
             const addressSeed = ethereumAddress.toLowerCase();
 
-            const avatarData = generateAvatar(type, addressSeed);
+            const avatarBody = await getOrGenerateAvatar(addressSeed, type);
 
             // Handle ETag caching
-            if (request.headers["if-none-match"] === avatarData.etag) {
+            const { etag, contentType } = generateAvatar(type, addressSeed);
+            if (request.headers["if-none-match"] === etag) {
                 console.log("ETag matches - sending 304 Not Modified");
                 response.status(304).end();
                 return;
             }
 
             // Set headers and send response
-            setAvatarHeaders(response, avatarData);
+            response.setHeader("Content-Type", contentType);
+            response.setHeader("ETag", etag);
             response.set("Cache-Control", CACHE_CONTROL.LONG);
-            response.send(avatarData.body);
+            response.send(avatarBody);
         } catch (error) {
             console.error("Error handling avatar request:", error);
 
