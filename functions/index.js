@@ -196,12 +196,7 @@ async function cacheAddress(addressString, ethereumAddress) {
 
 // Utility function to validate Ethereum addresses
 function isValidEthereumAddress(address) {
-    try {
-        ethers.utils.getAddress(address);
-        return true;
-    } catch (e) {
-        return false;
-    }
+    return ethers.isAddress(address);
 }
 
 // Utility function to validate ENS names
